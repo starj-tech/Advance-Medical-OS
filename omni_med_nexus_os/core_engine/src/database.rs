@@ -15,6 +15,8 @@ impl EdgeDatabase {
         self.conn.execute("CREATE TABLE IF NOT EXISTS asset_usage_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id INTEGER NOT NULL, asset_name TEXT NOT NULL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)", [])?;
         self.conn.execute("CREATE TABLE IF NOT EXISTS assets_3d_locations (id INTEGER PRIMARY KEY AUTOINCREMENT, hospital_id INTEGER NOT NULL, asset_name TEXT NOT NULL, asset_type TEXT NOT NULL, pos_x REAL NOT NULL, pos_y REAL NOT NULL, pos_z REAL NOT NULL, status TEXT NOT NULL)", [])?;
         self.conn.execute("CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, action TEXT NOT NULL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)", [])?;
+        self.conn.execute("CREATE TABLE IF NOT EXISTS vitals (id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id INTEGER NOT NULL, heart_rate REAL, blood_pressure TEXT, temp REAL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(patient_id) REFERENCES patients_global(id))", [])?;
+        self.conn.execute("CREATE TABLE IF NOT EXISTS allergies_and_conditions (id INTEGER PRIMARY KEY AUTOINCREMENT, patient_id INTEGER NOT NULL, condition TEXT NOT NULL, severity TEXT, FOREIGN KEY(patient_id) REFERENCES patients_global(id))", [])?;
         Ok(())
     }
 }

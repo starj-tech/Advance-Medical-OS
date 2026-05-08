@@ -53,7 +53,7 @@ class _DashboardNavigatorState extends State<DashboardNavigator> {
   }
 }
 
-// 1. Doctor (Clinical Intelligence)
+// 1. Doctor (Clinical Intelligence) + Neural-Clinical Engine (NCE)
 class DoctorDashboard extends StatefulWidget {
   const DoctorDashboard({super.key});
   @override
@@ -63,71 +63,141 @@ class DoctorDashboard extends StatefulWidget {
 class _DoctorDashboardState extends State<DoctorDashboard> {
   String _sttResult = "Press the mic to start The Ghost Scribe.";
   String _prescriptionResult = "";
+  String _icd10Result = "";
+  String _ewsResult = "Loading Early Warning System (EWS)...";
+  String _crossCheckResult = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _runEWS();
+  }
+
+  void _runEWS() async {
+    // Mocking vitals for EWS check
+    final result = await predictEws(heartRate: 115.0, systolicBp: 85.0, temp: 39.5);
+    setState(() { _ewsResult = result; });
+  }
 
   void _runScribe() async {
     final result = await ghostScribeMockProcess(audioPath: "/virtual/audio/rec_01.wav");
     setState(() { _sttResult = result; });
   }
 
+  void _runAutoCoding() async {
+    // Extracting diagnosis from ghost scribe or input
+    final result = await autoCodeIcd10(diagnosis: "Hypertension");
+    setState(() { _icd10Result = result; });
+  }
+
   void _runPrescription() async {
+    final check = await crossCheckSafety(patientCondition: "kidney failure", drug: "NSAID");
+    if (check.contains("CONTRAINDICATION")) {
+      setState(() {
+        _crossCheckResult = check;
+        _prescriptionResult = "Prescription blocked due to safety concern.";
+      });
+      return;
+    }
+
     final result = await oneTapPrescription(drug: "Amoxicillin");
-    setState(() { _prescriptionResult = result; });
+    setState(() {
+      _crossCheckResult = check;
+      _prescriptionResult = result;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // EWS Banner
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: _ewsResult.contains("ALERT") ? Colors.red.withOpacity(0.8) : Colors.green.withOpacity(0.8),
+            width: double.infinity,
+            child: Row(
               children: [
-                const Text("The Ghost Scribe", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: _runScribe,
-                  icon: const Icon(Icons.mic),
-                  label: const Text("Start Recording"),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  color: Colors.black26,
-                  child: Text(_sttResult),
-                ),
-                const SizedBox(height: 20),
-                const Text("One-Tap Prescription", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                ElevatedButton(onPressed: _runPrescription, child: const Text("Prescribe Amoxicillin")),
-                const SizedBox(height: 10),
-                Text(_prescriptionResult, style: const TextStyle(color: Colors.orange)),
+                const Icon(Icons.warning, color: Colors.white, size: 30),
+                const SizedBox(width: 10),
+                Expanded(child: Text(_ewsResult, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
               ],
             ),
           ),
-          Expanded(
-            child: Column(
-              children: [
-                const Text("Diagnostic Overlay (BP Trend)", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: FutureBuilder<Float64List>(
-                    future: getDiagnosticOverlay(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const CircularProgressIndicator();
-                      final spots = snapshot.data!.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList();
-                      return LineChart(
-                        LineChartData(
-                          lineBarsData: [LineChartBarData(spots: spots, isCurved: true, color: Colors.tealAccent, barWidth: 4)],
-                        ),
-                      );
-                    },
-                  ),
+          const SizedBox(height: 20),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("The Ghost Scribe", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      onPressed: _runScribe,
+                      icon: const Icon(Icons.mic),
+                      label: const Text("Start Recording"),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      color: Colors.black26,
+                      child: Text(_sttResult),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      onPressed: _runAutoCoding,
+                      icon: const Icon(Icons.code),
+                      label: const Text("Auto-Code ICD-10 (NCE)"),
+                    ),
+                    if (_icd10Result.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text("Generated Code: $_icd10Result", style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                      ),
+
+                    const SizedBox(height: 20),
+                    const Text("One-Tap Prescription (with NCE Safety)", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    ElevatedButton(onPressed: _runPrescription, child: const Text("Prescribe NSAID")),
+                    const SizedBox(height: 10),
+                    if (_crossCheckResult.isNotEmpty)
+                      Text(_crossCheckResult, style: TextStyle(color: _crossCheckResult.contains("CONTRAINDICATION") ? Colors.redAccent : Colors.green)),
+                    Text(_prescriptionResult, style: const TextStyle(color: Colors.orange)),
+                  ],
                 ),
-              ],
-            ),
-          )
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  children: [
+                    const Text("Diagnostic Overlay (BP Trend)", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      height: 300,
+                      child: FutureBuilder<Float64List>(
+                        future: getDiagnosticOverlay(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) return const CircularProgressIndicator();
+                          final spots = snapshot.data!.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList();
+                          return LineChart(
+                            LineChartData(
+                              lineBarsData: [LineChartBarData(spots: spots, isCurved: true, color: Colors.tealAccent, barWidth: 4)],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
         ],
       ),
     );
@@ -202,7 +272,6 @@ class _ExecutiveDashboardState extends State<ExecutiveDashboard> {
               children: [
                 const Text("Live Bed & Asset Mapping (3D)", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 Expanded(
-                  // We load a simple cube or 3D object to simulate the map in this bootstrap
                   child: Flutter3DViewer(
                     controller: controller,
                     src: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',

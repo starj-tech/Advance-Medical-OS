@@ -3,4 +3,5 @@ pub mod database;
 pub mod clinical;
 pub mod operational;
 pub mod strategic;
+pub mod nce;
 pub mod api;
