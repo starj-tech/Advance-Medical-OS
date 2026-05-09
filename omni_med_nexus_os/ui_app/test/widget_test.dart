@@ -3,10 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ui_app/main.dart';
 
 void main() {
-  testWidgets('Router UI renders correctly', (WidgetTester tester) async {
+  testWidgets('Router Select UI renders', (WidgetTester tester) async {
     await tester.pumpWidget(const OmniMedNexusOS());
-
-    // Verify login is present
-    expect(find.text('Login Sp.EM (ER)'), findsOneWidget);
+    expect(find.text('Login to Access Specific Clinical Clusters'), findsOneWidget);
   });
 }
