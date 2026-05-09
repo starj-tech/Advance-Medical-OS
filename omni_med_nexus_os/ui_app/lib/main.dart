@@ -18,283 +18,208 @@ class OmniMedNexusOS extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.teal,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F172A), // Deep futuristic blue
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
       ),
-      home: const DashboardNavigator(),
+      home: const LoginRouter(),
     );
   }
 }
 
-class DashboardNavigator extends StatefulWidget {
-  const DashboardNavigator({super.key});
+// 1. RBAC Router
+class LoginRouter extends StatefulWidget {
+  const LoginRouter({super.key});
   @override
-  State<DashboardNavigator> createState() => _DashboardNavigatorState();
+  State<LoginRouter> createState() => _LoginRouterState();
 }
 
-class _DashboardNavigatorState extends State<DashboardNavigator> {
-  int _currentIndex = 0;
-  final List<Widget> _dashboards = [
-    const NeuralCockpit(),
-    const CommandCenter(),
-    const GalacticHub(),
-  ];
+class _LoginRouterState extends State<LoginRouter> {
+  UserProfile? _user;
+
+  void _login(String role) async {
+    final profile = await loginMock(username: role);
+    setState(() => _user = profile);
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Responsive wrapping for App Bar
+    if (_user == null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("OMNI-MED NEXUS OS", style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.tealAccent)),
+              const SizedBox(height: 10),
+              const Text("Login to Access Role Workspace", style: TextStyle(fontSize: 16)),
+              const SizedBox(height: 40),
+              Wrap(
+                spacing: 10, runSpacing: 10,
+                children: [
+                  ElevatedButton(onPressed: () => _login("dr_er"), child: const Text("Login Sp.EM (ER)")),
+                  ElevatedButton(onPressed: () => _login("dr_neuro"), child: const Text("Login Sp.BS (Neuro)")),
+                  ElevatedButton(onPressed: () => _login("dr_psych"), child: const Text("Login Sp.KJ (Psych)")),
+                  ElevatedButton(onPressed: () => _login("exec_cfo"), child: const Text("Login CFO (Exec)")),
+                  ElevatedButton(onPressed: () => _login("holding_audit"), child: const Text("Login Group Auditor")),
+                ],
+              )
+            ],
+          ),
+        ),
+      );
+    }
+
+    return RoleDashboard(user: _user!);
+  }
+}
+
+class RoleDashboard extends StatelessWidget {
+  final UserProfile user;
+  const RoleDashboard({super.key, required this.user});
+
+  @override
+  Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 800;
+
+    Widget content;
+    switch (user.role) {
+      case UserRole.SpEM: content = const ERDashboard(); break;
+      case UserRole.SpBS: content = const NeuroDashboard(); break;
+      case UserRole.SpKJ: content = const PsychDashboard(); break;
+      case UserRole.CFO: content = const ExecDashboard(); break;
+      case UserRole.GroupAuditor: content = const StrategicDashboard(); break;
+      default: content = const Center(child: Text("Template Cluster"));
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isMobile ? 'Omni-Med OS' : 'Omni-Med Nexus OS - App of Everything', style: const TextStyle(fontSize: 16)),
+        title: Text('${user.name} - Workspace', style: const TextStyle(color: Colors.tealAccent)),
         backgroundColor: const Color(0xFF1E293B),
         actions: [
           Container(
-            alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: FutureBuilder<String>(
-              future: checkSatusehatStatus(),
-              builder: (context, snapshot) {
-                final status = snapshot.data ?? "Connecting...";
-                return Row(
-                  children: [
-                    const Icon(Icons.bolt, color: Colors.yellowAccent, size: 16),
-                    const SizedBox(width: 4),
-                    if (!isMobile) const Text("Latency: 0.1ms (Native)", style: TextStyle(color: Colors.greenAccent, fontSize: 12)),
-                    if (!isMobile) const SizedBox(width: 16),
-                    const Icon(Icons.shield, color: Colors.lightBlue, size: 16),
-                    const SizedBox(width: 4),
-                    Text(isMobile ? "AES-GCM Sync" : "Zero-Knowledge Sync: $status", style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 12)),
-                  ],
-                );
-              },
-            ),
+            alignment: Alignment.center,
+            child: const Text("AES-256-GCM Secured", style: TextStyle(color: Colors.greenAccent, fontSize: 12)),
           )
         ],
       ),
-      body: _dashboards[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        backgroundColor: const Color(0xFF1E293B),
-        selectedItemColor: Colors.tealAccent,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.radar), label: 'Neural Cockpit (Doc)'),
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_customize), label: 'Command Center (Exec)'),
-          BottomNavigationBarItem(icon: Icon(Icons.language), label: 'Galactic Hub (Group)'),
+      body: content,
+    );
+  }
+}
+
+// 2. ER Specialist (Sp.EM) - Minimalist Alert Mode
+class ERDashboard extends StatelessWidget {
+  const ERDashboard({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          color: Colors.red.withOpacity(0.8),
+          child: const Text("CRITICAL: 2 Patients in RED ZONE. Wait time 0 mins.", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+        ),
+        const SizedBox(height: 20),
+        ListTile(
+          tileColor: Colors.black26,
+          leading: const Icon(Icons.warning, color: Colors.orange),
+          title: const Text("Patient B - YELLOW (Fracture)"),
+          subtitle: const Text("Wait time: 15 mins"),
+        ),
+        const SizedBox(height: 20),
+        ElevatedButton.icon(
+          onPressed: () {},
+          icon: const Icon(Icons.emergency),
+          label: const Text("Dispatch Ambulance (Auto-Routing)"),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+        )
+      ],
+    );
+  }
+}
+
+// 3. Neurosurgeon (Sp.BS) - Holographic Pre-Op
+class NeuroDashboard extends StatelessWidget {
+  const NeuroDashboard({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text("Holographic Surgical Pre-Op (Neural Navigation)", style: TextStyle(fontSize: 20, color: Colors.cyanAccent)),
+        ),
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(border: Border.all(color: Colors.cyanAccent)),
+            child: Flutter3DViewer(
+              controller: Flutter3DController(),
+              src: 'https://modelviewer.dev/shared-assets/models/Brain.glb', // Simulating 3D Brain DICOM
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton(onPressed: () {}, child: const Text("Sync Navigation to OR-1")),
+        )
+      ],
+    );
+  }
+}
+
+// 4. Psychiatrist (Sp.KJ) - Ultra Encrypted
+class PsychDashboard extends StatefulWidget {
+  const PsychDashboard({super.key});
+  @override
+  State<PsychDashboard> createState() => _PsychDashboardState();
+}
+
+class _PsychDashboardState extends State<PsychDashboard> {
+  String _saved = "";
+  void _saveNotes() async {
+    final res = await saveEncryptedTherapyNotes(notes: "Patient shows sign of mild depression.");
+    setState(() => _saved = res);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Psychopharmacology & Therapy Notes", style: TextStyle(fontSize: 20, color: Colors.purpleAccent)),
+          const SizedBox(height: 10),
+          const TextField(
+            maxLines: 5,
+            decoration: InputDecoration(hintText: "Enter private therapy notes...", border: OutlineOutlineInputBorder()),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(onPressed: _saveNotes, child: const Text("Save & Encrypt (Zero-Knowledge)")),
+          const SizedBox(height: 10),
+          Text(_saved, style: const TextStyle(color: Colors.greenAccent, fontFamily: 'monospace')),
         ],
       ),
     );
   }
 }
 
-// 1. The Physician’s Neural Cockpit
-class NeuralCockpit extends StatefulWidget {
-  const NeuralCockpit({super.key});
-  @override
-  State<NeuralCockpit> createState() => _NeuralCockpitState();
-}
-
-class _NeuralCockpitState extends State<NeuralCockpit> {
-  String _pharmacogenomicsAlert = "Checking DNA Vitals...";
-  String _timeline = "Loading...";
-
-  @override
-  void initState() {
-    super.initState();
-    _loadVitals();
-  }
-
-  void _loadVitals() async {
-    final alert = await checkPharmacogenomics(drug: "Steroid");
-    final timeline = await getBioTimeline();
-    setState(() {
-      _pharmacogenomicsAlert = alert;
-      _timeline = timeline;
-    });
-  }
-
+// 5. CFO (Exec)
+class ExecDashboard extends StatelessWidget {
+  const ExecDashboard({super.key});
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isMobile = constraints.maxWidth < 800;
-
-        List<Widget> content = [
-          // Left/Top Panel
-          Expanded(
-            flex: isMobile ? 0 : 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Pharmacogenomics Guard", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.tealAccent)),
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  padding: const EdgeInsets.all(12),
-                  color: _pharmacogenomicsAlert.contains("ALERT") ? Colors.red.withOpacity(0.3) : Colors.green.withOpacity(0.3),
-                  child: Text(_pharmacogenomicsAlert, style: const TextStyle(color: Colors.white)),
-                ),
-                const SizedBox(height: 10),
-                const Text("Longitudinal Bio-Timeline", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.tealAccent)),
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  padding: const EdgeInsets.all(12),
-                  color: Colors.black45,
-                  child: Text(_timeline, style: const TextStyle(color: Colors.white70)),
-                ),
-                const SizedBox(height: 10),
-                const Text("Peer-to-Peer Secure Consult", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.tealAccent)),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await peerToPeerConsult(docId: "Dr. House", payload: "Patient X Data");
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("E2EE Consult Sent!")));
-                  },
-                  icon: const Icon(Icons.lock),
-                  label: const Text("Share Patient E2EE"),
-                ),
-              ],
-            ),
-          ),
-          if (!isMobile) const SizedBox(width: 20),
-          // Right/Bottom Panel
-          Expanded(
-            flex: isMobile ? 0 : 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Holographic Surgical Pre-Op", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.tealAccent)),
-                Container(
-                  height: 300,
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(border: Border.all(color: Colors.tealAccent)),
-                  child: Flutter3DViewer(
-                    controller: Flutter3DController(),
-                    src: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ];
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: isMobile
-            ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: content)
-            : Row(crossAxisAlignment: CrossAxisAlignment.start, children: content),
-        );
-      }
-    );
+    return const Center(child: Text("CFO Dashboard: Revenue Guard & Digital Twin Simulation Placeholder", style: TextStyle(fontSize: 20)));
   }
 }
 
-// 2. The Hospital Command Center
-class CommandCenter extends StatefulWidget {
-  const CommandCenter({super.key});
-  @override
-  State<CommandCenter> createState() => _CommandCenterState();
-}
-
-class _CommandCenterState extends State<CommandCenter> {
-  String _labor = "";
-  String _legal = "";
-  String _maintenance = "";
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCommandData();
-  }
-
-  void _loadCommandData() async {
-    final labor = await laborArbitrageOptimizer();
-    final legal = await legalRiskHeatmap();
-    final maint = await preventiveMaintenanceCheck();
-    setState(() {
-      _labor = labor;
-      _legal = legal;
-      _maintenance = maint;
-    });
-  }
-
+// 6. Group Auditor (Strategic)
+class StrategicDashboard extends StatelessWidget {
+  const StrategicDashboard({super.key});
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildCard("Labor Arbitrage & Shift Optimizer", _labor, Icons.people, Colors.blueAccent),
-        _buildCard("Legal Risk Heatmap", _legal, Icons.gavel, Colors.orangeAccent),
-        _buildCard("Preventive Maintenance Ledger", _maintenance, Icons.build, Colors.purpleAccent),
-      ],
-    );
-  }
-
-  Widget _buildCard(String title, String data, IconData icon, Color color) {
-    return Card(
-      color: const Color(0xFF1E293B),
-      margin: const EdgeInsets.only(bottom: 16),
-      child: ListTile(
-        leading: Icon(icon, color: color, size: 40),
-        title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 8.0),
-          child: Text(data, style: const TextStyle(color: Colors.white70)),
-        ),
-      ),
-    );
-  }
-}
-
-// 3. The Galactic Governance Hub
-class GalacticHub extends StatefulWidget {
-  const GalacticHub({super.key});
-  @override
-  State<GalacticHub> createState() => _GalacticHubState();
-}
-
-class _GalacticHubState extends State<GalacticHub> {
-  String _ma = "";
-  String _sentiment = "";
-
-  @override
-  void initState() {
-    super.initState();
-    _loadGalacticData();
-  }
-
-  void _loadGalacticData() async {
-    final ma = await runMADueDiligence();
-    final sentiment = await getBrandSentiment();
-    setState(() {
-      _ma = ma;
-      _sentiment = sentiment;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildCard("M&A Due Diligence Engine", _ma, Icons.business, Colors.cyanAccent),
-        _buildCard("Brand Sentiment Neural Net", _sentiment, Icons.sentiment_neutral, Colors.pinkAccent),
-      ],
-    );
-  }
-
-  Widget _buildCard(String title, String data, IconData icon, Color color) {
-    return Card(
-      color: const Color(0xFF1E293B),
-      margin: const EdgeInsets.only(bottom: 16),
-      child: ListTile(
-        leading: Icon(icon, color: color, size: 40),
-        title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 8.0),
-          child: Text(data, style: const TextStyle(color: Colors.white70)),
-        ),
-      ),
-    );
+    return const Center(child: Text("Group Auditor: Global Blockchain Audit Trail Placeholder", style: TextStyle(fontSize: 20)));
   }
 }
