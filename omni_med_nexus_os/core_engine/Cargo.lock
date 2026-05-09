@@ -198,6 +198,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "flutter_rust_bridge",
+ "once_cell",
  "rusqlite",
  "serde",
  "serde_json",

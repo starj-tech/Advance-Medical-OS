@@ -4,4 +4,6 @@ pub mod clinical;
 pub mod operational;
 pub mod strategic;
 pub mod nce;
+pub mod blockchain;
+pub mod satusehat_bridge;
 pub mod api;

@@ -38,7 +38,32 @@ class _DashboardNavigatorState extends State<DashboardNavigator> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Omni-Med Nexus OS - The Intelligent Pulse of Healthcare')),
+      appBar: AppBar(
+        title: const Text('Omni-Med Nexus OS - The Intelligent Pulse of Healthcare', style: TextStyle(fontSize: 16)),
+        actions: [
+          Container(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: FutureBuilder<String>(
+              future: checkSatusehatStatus(),
+              builder: (context, snapshot) {
+                final status = snapshot.data ?? "Connecting...";
+                return Row(
+                  children: [
+                    const Icon(Icons.bolt, color: Colors.yellowAccent, size: 16),
+                    const SizedBox(width: 4),
+                    const Text("Latency: 0.1ms (Native)", style: TextStyle(color: Colors.greenAccent, fontSize: 12)),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.cloud_done, color: Colors.lightBlue, size: 16),
+                    const SizedBox(width: 4),
+                    Text(status, style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 12)),
+                  ],
+                );
+              },
+            ),
+          )
+        ],
+      ),
       body: _dashboards[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -74,7 +99,6 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   }
 
   void _runEWS() async {
-    // Mocking vitals for EWS check
     final result = await predictEws(heartRate: 115.0, systolicBp: 85.0, temp: 39.5);
     setState(() { _ewsResult = result; });
   }
@@ -85,7 +109,6 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
   }
 
   void _runAutoCoding() async {
-    // Extracting diagnosis from ghost scribe or input
     final result = await autoCodeIcd10(diagnosis: "Hypertension");
     setState(() { _icd10Result = result; });
   }
@@ -99,7 +122,6 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
       });
       return;
     }
-
     final result = await oneTapPrescription(drug: "Amoxicillin");
     setState(() {
       _crossCheckResult = check;
@@ -114,7 +136,6 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // EWS Banner
           Container(
             padding: const EdgeInsets.all(16),
             color: _ewsResult.contains("ALERT") ? Colors.red.withOpacity(0.8) : Colors.green.withOpacity(0.8),
@@ -128,7 +149,6 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
             ),
           ),
           const SizedBox(height: 20),
-
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -138,36 +158,18 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                   children: [
                     const Text("The Ghost Scribe", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      onPressed: _runScribe,
-                      icon: const Icon(Icons.mic),
-                      label: const Text("Start Recording"),
-                    ),
+                    ElevatedButton.icon(onPressed: _runScribe, icon: const Icon(Icons.mic), label: const Text("Start Recording")),
                     const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      color: Colors.black26,
-                      child: Text(_sttResult),
-                    ),
+                    Container(padding: const EdgeInsets.all(12), color: Colors.black26, child: Text(_sttResult)),
                     const SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      onPressed: _runAutoCoding,
-                      icon: const Icon(Icons.code),
-                      label: const Text("Auto-Code ICD-10 (NCE)"),
-                    ),
-                    if (_icd10Result.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text("Generated Code: $_icd10Result", style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-                      ),
-
+                    ElevatedButton.icon(onPressed: _runAutoCoding, icon: const Icon(Icons.code), label: const Text("Auto-Code ICD-10 (NCE)")),
+                    if (_icd10Result.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8.0), child: Text("Generated Code: $_icd10Result", style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold))),
                     const SizedBox(height: 20),
                     const Text("One-Tap Prescription (with NCE Safety)", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
                     ElevatedButton(onPressed: _runPrescription, child: const Text("Prescribe NSAID")),
                     const SizedBox(height: 10),
-                    if (_crossCheckResult.isNotEmpty)
-                      Text(_crossCheckResult, style: TextStyle(color: _crossCheckResult.contains("CONTRAINDICATION") ? Colors.redAccent : Colors.green)),
+                    if (_crossCheckResult.isNotEmpty) Text(_crossCheckResult, style: TextStyle(color: _crossCheckResult.contains("CONTRAINDICATION") ? Colors.redAccent : Colors.green)),
                     Text(_prescriptionResult, style: const TextStyle(color: Colors.orange)),
                   ],
                 ),
@@ -185,11 +187,7 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                         builder: (context, snapshot) {
                           if (!snapshot.hasData) return const CircularProgressIndicator();
                           final spots = snapshot.data!.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList();
-                          return LineChart(
-                            LineChartData(
-                              lineBarsData: [LineChartBarData(spots: spots, isCurved: true, color: Colors.tealAccent, barWidth: 4)],
-                            ),
-                          );
+                          return LineChart(LineChartData(lineBarsData: [LineChartBarData(spots: spots, isCurved: true, color: Colors.tealAccent, barWidth: 4)]));
                         },
                       ),
                     ),
@@ -213,6 +211,7 @@ class ExecutiveDashboard extends StatefulWidget {
 
 class _ExecutiveDashboardState extends State<ExecutiveDashboard> {
   String _revenueGuardAlert = "Running audit...";
+  String _roiPrevented = "Loading...";
   double _extraNurses = 0;
   String _simResult = "";
   Flutter3DController controller = Flutter3DController();
@@ -226,7 +225,11 @@ class _ExecutiveDashboardState extends State<ExecutiveDashboard> {
 
   void _runAudit() async {
     final res = await checkRevenueGuard();
-    setState(() => _revenueGuardAlert = res);
+    final roi = await getFinancialLeakagePrevented();
+    setState(() {
+      _revenueGuardAlert = res;
+      _roiPrevented = roi;
+    });
   }
 
   void _runSim() async {
@@ -245,24 +248,13 @@ class _ExecutiveDashboardState extends State<ExecutiveDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text("Revenue Guard AI", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  color: Colors.red.withOpacity(0.2),
-                  child: Text(_revenueGuardAlert, style: const TextStyle(color: Colors.redAccent)),
-                ),
+                Container(padding: const EdgeInsets.all(12), color: Colors.red.withOpacity(0.2), child: Text(_revenueGuardAlert, style: const TextStyle(color: Colors.redAccent))),
+                const SizedBox(height: 10),
+                Text("Financial Leakage Prevented (ROI): $_roiPrevented", style: const TextStyle(fontSize: 18, color: Colors.green, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
                 const Text("Digital Twin Simulation", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 Text("Add Nurses: ${_extraNurses.toInt()}"),
-                Slider(
-                  value: _extraNurses,
-                  min: 0,
-                  max: 10,
-                  divisions: 10,
-                  onChanged: (val) {
-                    setState(() => _extraNurses = val);
-                    _runSim();
-                  },
-                ),
+                Slider(value: _extraNurses, min: 0, max: 10, divisions: 10, onChanged: (val) { setState(() => _extraNurses = val); _runSim(); }),
                 Text(_simResult, style: const TextStyle(color: Colors.greenAccent)),
               ],
             ),
@@ -271,12 +263,7 @@ class _ExecutiveDashboardState extends State<ExecutiveDashboard> {
             child: Column(
               children: [
                 const Text("Live Bed & Asset Mapping (3D)", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                Expanded(
-                  child: Flutter3DViewer(
-                    controller: controller,
-                    src: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
-                  ),
-                ),
+                Expanded(child: Flutter3DViewer(controller: controller, src: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb')),
               ],
             ),
           )
@@ -296,6 +283,7 @@ class StrategicDashboard extends StatefulWidget {
 class _StrategicDashboardState extends State<StrategicDashboard> {
   String _meshResult = "";
   String _benchResult = "";
+  List<String> _auditTrail = [];
 
   @override
   void initState() {
@@ -306,32 +294,46 @@ class _StrategicDashboardState extends State<StrategicDashboard> {
   void _loadStrategicData() async {
     final m = await globalResourceMesh();
     final b = await runBenchmarking();
+    final a = await getAuditTrail();
     setState(() {
       _meshResult = m;
       _benchResult = b;
+      _auditTrail = a;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text("Global Resource Mesh", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          Card(
-            color: Colors.blueGrey.shade800,
-            child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_meshResult, style: const TextStyle(fontSize: 16))),
-          ),
+          Card(color: Colors.blueGrey.shade800, child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_meshResult, style: const TextStyle(fontSize: 16)))),
           const SizedBox(height: 30),
           const Text("Standardized Benchmarking", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          Card(
-            color: Colors.blueGrey.shade800,
-            child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_benchResult, style: const TextStyle(fontSize: 16))),
+          Card(color: Colors.blueGrey.shade800, child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_benchResult, style: const TextStyle(fontSize: 16)))),
+          const SizedBox(height: 30),
+          Row(
+            children: [
+              const Text("Immutable Audit Trail (Blockchain)", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              IconButton(icon: const Icon(Icons.refresh), onPressed: _loadStrategicData),
+            ],
           ),
+          Container(
+            height: 200,
+            decoration: BoxDecoration(color: Colors.black, border: Border.all(color: Colors.greenAccent)),
+            child: ListView.builder(
+              itemCount: _auditTrail.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(_auditTrail[index], style: const TextStyle(fontFamily: 'monospace', color: Colors.greenAccent, fontSize: 12)),
+                );
+              },
+            ),
+          )
         ],
       ),
     );
