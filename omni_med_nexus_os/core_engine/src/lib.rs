@@ -6,4 +6,6 @@ pub mod strategic;
 pub mod nce;
 pub mod blockchain;
 pub mod satusehat_bridge;
+pub mod security;
+pub mod sync_engine;
 pub mod api;

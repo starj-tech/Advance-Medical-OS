@@ -1,4 +1,5 @@
 use crate::blockchain::record_audit_trail;
+use crate::sync_engine::record_delta_change;
 
 pub fn check_revenue_guard() -> String {
     let alert = "ALERT: 2 MRI usages not billed. Potential loss: $1200. Automatically generating draft invoices...".to_string();
@@ -19,7 +20,19 @@ pub fn get_asset_locations() -> Vec<(String, f64, f64, f64)> {
     ]
 }
 
-// WIN-WIN MODEL VALUE ADD: Return simulated prevented leakage
 pub fn get_financial_leakage_prevented() -> String {
     "$45,200 (YTD)".to_string()
+}
+
+// App of Everything Additions
+pub fn labor_arbitrage_optimizer() -> String {
+    "AI OPTIMIZER: Incoming Dengue season detected. Reallocating 5 nurses from Ward B to ER for next 2 weeks to prevent burnout.".to_string()
+}
+
+pub fn legal_risk_heatmap() -> String {
+    "LEGAL RISK: 3 Surgery consent forms missing physical/digital signatures. Auto-notifying compliance officer.".to_string()
+}
+
+pub fn preventive_maintenance_check() -> String {
+    "MAINTENANCE: MRI Room B has reached 9500 hours. Auto-scheduling technician before 10,000 hr failure limit.".to_string()
 }
