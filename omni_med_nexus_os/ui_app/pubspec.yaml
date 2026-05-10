@@ -42,6 +42,9 @@ dependencies:
   record: ^6.2.0
   rust_lib_ui_app:
     path: rust_builder
+  flutter_svg: ^2.3.0
+  font_awesome_flutter: ^11.0.0
+  google_fonts: ^8.1.0
 
 dev_dependencies:
   flutter_test:

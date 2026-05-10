@@ -8,10 +8,13 @@ import 'onco_dashboard.dart';
 import 'obgyn_dashboard.dart';
 import 'radio_dashboard.dart';
 import 'primary_care_dashboards.dart';
+import 'pediatrics_dashboard.dart';
 import 'sensory_dashboards.dart';
+import 'rheumatology_dashboard.dart';
 import 'internal_med_dashboards.dart';
 import 'surgery_dashboards.dart';
 import 'sensory_dashboards.dart';
+import 'rheumatology_dashboard.dart';
 import 'internal_med_dashboards.dart';
 import 'diagnostics_dashboards.dart';
 

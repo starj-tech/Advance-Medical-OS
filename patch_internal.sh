@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > omni_med_nexus_os/ui_app/lib/dashboards/internal_med_dashboards.dart
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../src/rust/api.dart';
@@ -135,3 +137,4 @@ class _PharmacyDashboardState extends State<PharmacyDashboard> {
     );
   }
 }
+INNER_EOF
