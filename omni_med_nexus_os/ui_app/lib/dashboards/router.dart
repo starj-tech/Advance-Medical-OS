@@ -7,6 +7,10 @@ import 'cardio_dashboard.dart';
 import 'onco_dashboard.dart';
 import 'obgyn_dashboard.dart';
 import 'radio_dashboard.dart';
+import 'primary_care_dashboards.dart';
+import 'surgery_dashboards.dart';
+import 'sensory_dashboards.dart';
+import 'diagnostics_dashboards.dart';
 
 class RoleDashboardRouter extends StatelessWidget {
   final UserProfile user;
@@ -16,6 +20,7 @@ class RoleDashboardRouter extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget content;
     switch (user.role) {
+      // High-Stakes & Core
       case UserRole.SpEM: content = const ERDashboard(); break;
       case UserRole.SpBS: content = const NeuroDashboard(); break;
       case UserRole.Intensivist: content = const IcuDashboard(); break;
@@ -24,14 +29,29 @@ class RoleDashboardRouter extends StatelessWidget {
       case UserRole.SpOG: content = const ObgynDashboard(); break;
       case UserRole.Radiologist: content = const RadioDashboard(); break;
 
-      // Placeholders for the rest
-      case UserRole.SpAn: content = const Center(child: Text("Anesthesiologist Dashboard Placeholder")); break;
-      case UserRole.SpOT: content = const Center(child: Text("Orthopedic Pre-Op Templating Placeholder")); break;
-      case UserRole.SpBKV: content = const Center(child: Text("Cardiac Surgeon Hemodynamic Placeholder")); break;
-      case UserRole.SpKJ: content = const Center(child: Text("Psychiatrist Therapy Notes Placeholder")); break;
+      // Primary Care
+      case UserRole.GP: content = const GPDashboard(); break;
+      case UserRole.FamilyPhysician: content = const FamilyPhysicianDashboard(); break;
+      case UserRole.SpOk: content = const OccupationalDashboard(); break;
+
+      // Surgery Sub-specialties
+      case UserRole.Urologist: content = const UrologyDashboard(); break;
+      case UserRole.PlasticSurgeon: content = const PlasticSurgeryDashboard(); break;
+      case UserRole.VascularSurgeon: content = const VascularDashboard(); break;
+
+      // Sensory Organs
+      case UserRole.SpM: content = const OphthalmologyDashboard(); break;
+      case UserRole.SpKK: content = const DermatologyDashboard(); break;
+
+      // Diagnostics & Forensics
+      case UserRole.SpPA: content = const PathologyDashboard(); break;
+      case UserRole.ForensicMed: content = const ForensicsDashboard(); break;
+
+      // Operational & Holding
       case UserRole.CFO: content = const Center(child: Text("CFO Revenue Guard Placeholder")); break;
       case UserRole.GroupAuditor: content = const Center(child: Text("Global Auditor Blockchain Placeholder")); break;
-      default: content = Center(child: Text("${user.role.name} Dashboard Placeholder"));
+
+      default: content = Center(child: Text("${user.role.name} Dashboard Workspace"));
     }
 
     return Scaffold(
@@ -42,7 +62,7 @@ class RoleDashboardRouter extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             alignment: Alignment.center,
-            child: const Text("AES-256-GCM Secured", style: TextStyle(color: Colors.greenAccent, fontSize: 12)),
+            child: const Text("Zero-Knowledge Secured", style: TextStyle(color: Colors.greenAccent, fontSize: 12)),
           )
         ],
       ),

@@ -49,7 +49,7 @@ class _LoginSelectorState extends State<LoginSelector> {
               children: [
                 const Text("OMNI-MED NEXUS OS", style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.tealAccent)),
                 const SizedBox(height: 10),
-                const Text("Login to Access Specific Clinical Clusters", style: TextStyle(fontSize: 16)),
+                const Text("Select Secured Access Portal", style: TextStyle(fontSize: 16)),
                 const SizedBox(height: 40),
                 Wrap(
                   spacing: 10, runSpacing: 10,
@@ -57,13 +57,15 @@ class _LoginSelectorState extends State<LoginSelector> {
                   children: [
                     ElevatedButton(onPressed: () => _login("dr_er"), child: const Text("Sp.EM (ER)")),
                     ElevatedButton(onPressed: () => _login("dr_icu"), child: const Text("Intensivist (ICU)")),
-                    ElevatedButton(onPressed: () => _login("dr_cardio"), child: const Text("Cardiologist (Sp.JP)")),
+                    ElevatedButton(onPressed: () => _login("dr_neuro"), child: const Text("Neurosurgeon (Sp.BS)")),
                     ElevatedButton(onPressed: () => _login("dr_onco"), child: const Text("Oncologist (Sp.Onk)")),
                     ElevatedButton(onPressed: () => _login("dr_obgyn"), child: const Text("Obstetrician (Sp.OG)")),
                     ElevatedButton(onPressed: () => _login("dr_radio"), child: const Text("Radiologist (Sp.Rad)")),
-                    ElevatedButton(onPressed: () => _login("dr_neuro"), child: const Text("Neurosurgeon (Sp.BS)")),
+                    // Adding a few more for testing the extended clusters
+                    ElevatedButton(onPressed: () => _login("dr_derm"), child: const Text("Dermatologist (Sp.KK)")),
+                    ElevatedButton(onPressed: () => _login("dr_gp"), child: const Text("General Practitioner (GP)")),
+                    ElevatedButton(onPressed: () => _login("dr_forensic"), child: const Text("Forensic Medicine")),
                     ElevatedButton(onPressed: () => _login("exec_cfo"), child: const Text("CFO (Exec)")),
-                    ElevatedButton(onPressed: () => _login("holding_audit"), child: const Text("Group Auditor")),
                   ],
                 )
               ],

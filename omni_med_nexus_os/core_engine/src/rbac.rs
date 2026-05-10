@@ -106,6 +106,9 @@ pub fn login_mock(username: &str) -> UserProfile {
         "dr_onco" => UserProfile { user_id: "u9".into(), name: "Dr. Iota (Oncologist)".into(), role: UserRole::Oncologist, primary_hospital_id: "HOSP_1".into() },
         "dr_obgyn" => UserProfile { user_id: "u10".into(), name: "Dr. Kappa (ObGyn)".into(), role: UserRole::SpOG, primary_hospital_id: "HOSP_1".into() },
         "dr_radio" => UserProfile { user_id: "u11".into(), name: "Dr. Lambda (Radiologist)".into(), role: UserRole::Radiologist, primary_hospital_id: "HOSP_1".into() },
+        "dr_derm" => UserProfile { user_id: "u12".into(), name: "Dr. Mu (Dermatologist)".into(), role: UserRole::SpKK, primary_hospital_id: "HOSP_1".into() },
+        "dr_gp" => UserProfile { user_id: "u13".into(), name: "Dr. Nu (GP)".into(), role: UserRole::GP, primary_hospital_id: "HOSP_1".into() },
+        "dr_forensic" => UserProfile { user_id: "u14".into(), name: "Dr. Xi (Forensic)".into(), role: UserRole::ForensicMed, primary_hospital_id: "HOSP_1".into() },
 
         "exec_cfo" => UserProfile { user_id: "u100".into(), name: "Mr. Theta (CFO)".into(), role: UserRole::CFO, primary_hospital_id: "HOSP_1".into() },
         "holding_audit" => UserProfile { user_id: "u101".into(), name: "Ms. Iota (Auditor)".into(), role: UserRole::GroupAuditor, primary_hospital_id: "GLOBAL".into() },

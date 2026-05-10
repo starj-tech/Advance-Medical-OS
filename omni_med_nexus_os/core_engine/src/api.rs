@@ -1,4 +1,5 @@
 pub use crate::clinical::*;
+pub use crate::clinical_extended::*;
 pub use crate::operational::*;
 pub use crate::strategic::*;
 pub use crate::nce::*;
@@ -9,5 +10,5 @@ pub use crate::sync_engine::*;
 pub use crate::rbac::*;
 
 pub fn engine_version() -> String {
-    "1.1.0-RBAC-CLUSTERS".to_string()
+    "1.2.0-CLINICAL-EXPANSION".to_string()
 }
