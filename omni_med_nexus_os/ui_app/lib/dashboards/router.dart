@@ -8,8 +8,11 @@ import 'onco_dashboard.dart';
 import 'obgyn_dashboard.dart';
 import 'radio_dashboard.dart';
 import 'primary_care_dashboards.dart';
+import 'sensory_dashboards.dart';
+import 'internal_med_dashboards.dart';
 import 'surgery_dashboards.dart';
 import 'sensory_dashboards.dart';
+import 'internal_med_dashboards.dart';
 import 'diagnostics_dashboards.dart';
 
 class RoleDashboardRouter extends StatelessWidget {
@@ -31,6 +34,10 @@ class RoleDashboardRouter extends StatelessWidget {
 
       // Primary Care
       case UserRole.GP: content = const GPDashboard(); break;
+      case UserRole.TemplateClinical: content = const InternistDashboard(); break;
+      case UserRole.SpKJ: content = const PsychiatristDashboard(); break;
+      case UserRole.SpA: content = const PediatricsDashboard(); break;
+      case UserRole.Rheumatologist: content = const RheumatologyDashboard(); break;
       case UserRole.FamilyPhysician: content = const FamilyPhysicianDashboard(); break;
       case UserRole.SpOk: content = const OccupationalDashboard(); break;
 
@@ -51,6 +58,10 @@ class RoleDashboardRouter extends StatelessWidget {
       case UserRole.CFO: content = const ExecDashboard(); break;
       case UserRole.GroupAuditor: content = const Center(child: Text("Global Auditor Blockchain Placeholder")); break;
 
+      case UserRole.Endocrinologist: content = const EndocrinologyDashboard(); break;
+      case UserRole.Pulmonologist: content = const PulmonologyDashboard(); break;
+      case UserRole.Gastroenterologist: content = const GastroenterologyDashboard(); break;
+      case UserRole.Pharmacy: content = const PharmacyDashboard(); break;
       default: content = Center(child: Text("${user.role.name} Dashboard Workspace"));
     }
 
