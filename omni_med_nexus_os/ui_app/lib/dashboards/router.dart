@@ -7,6 +7,8 @@ import 'cardio_dashboard.dart';
 import 'onco_dashboard.dart';
 import 'obgyn_dashboard.dart';
 import 'radio_dashboard.dart';
+import 'ortho_dashboard.dart';
+import 'anes_dashboard.dart';
 import 'primary_care_dashboards.dart';
 import 'pediatrics_dashboard.dart';
 import 'sensory_dashboards.dart';
@@ -50,7 +52,7 @@ class RoleDashboardRouter extends StatelessWidget {
       case UserRole.VascularSurgeon: content = const VascularDashboard(); break;
 
       // Sensory Organs
-      case UserRole.SpM: content = const OphthalmologyDashboard(); break;
+      case UserRole.SpM: content = const EnhancedOphthalmologyDashboard(); break;
       case UserRole.SpKK: content = const DermatologyDashboard(); break;
 
       // Diagnostics & Forensics
@@ -62,7 +64,7 @@ class RoleDashboardRouter extends StatelessWidget {
       case UserRole.GroupAuditor: content = const Center(child: Text("Global Auditor Blockchain Placeholder")); break;
 
       case UserRole.Endocrinologist: content = const EndocrinologyDashboard(); break;
-      case UserRole.Pulmonologist: content = const PulmonologyDashboard(); break;
+      case UserRole.Pulmonologist: content = const EnhancedPulmonologyDashboard(); break;
       case UserRole.Gastroenterologist: content = const GastroenterologyDashboard(); break;
       case UserRole.Pharmacy: content = const PharmacyDashboard(); break;
       default: content = Center(child: Text("${user.role.name} Dashboard Workspace"));
