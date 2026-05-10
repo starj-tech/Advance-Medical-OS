@@ -10,4 +10,5 @@ pub mod satusehat_bridge;
 pub mod security;
 pub mod sync_engine;
 pub mod rbac;
+pub mod nexus_connect;
 pub mod api;

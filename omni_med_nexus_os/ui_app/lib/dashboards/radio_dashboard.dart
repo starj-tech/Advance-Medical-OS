@@ -9,15 +9,24 @@ class RadioDashboard extends StatefulWidget {
 
 class _RadioDashboardState extends State<RadioDashboard> {
   String _ai = "Scanning DICOM...";
+  String _hardwareStatus = "Checking device connection...";
+
   @override
   void initState() {
     super.initState();
-    _loadAi();
+    _loadData();
   }
-  void _loadAi() async {
+
+  void _loadData() async {
+    initializeHardwareGateways();
+    final hw = await getHardwareStatus(protocolFilter: "DICOM");
     final res = await detectLesionAi(dicomHash: "image_101");
-    setState(() => _ai = res);
+    setState(() {
+      _hardwareStatus = hw;
+      _ai = res;
+    });
   }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -25,7 +34,21 @@ class _RadioDashboardState extends State<RadioDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Radiologist Workspace", style: TextStyle(fontSize: 24, color: Colors.tealAccent)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Radiologist Workspace", style: TextStyle(fontSize: 24, color: Colors.tealAccent)),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black45,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _hardwareStatus.contains("🔴") ? Colors.red : Colors.yellow),
+                ),
+                child: Text("NexusConnect: $_hardwareStatus", style: const TextStyle(fontSize: 12)),
+              )
+            ],
+          ),
           const SizedBox(height: 20),
           Container(
             height: 200,
