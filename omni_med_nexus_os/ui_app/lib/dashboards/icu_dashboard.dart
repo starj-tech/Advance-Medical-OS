@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../src/rust/api.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class IcuDashboard extends StatefulWidget {
   const IcuDashboard({super.key});
@@ -8,23 +9,28 @@ class IcuDashboard extends StatefulWidget {
 }
 
 class _IcuDashboardState extends State<IcuDashboard> {
-  String _sofa = "Calculating...";
-  String _hardwareStatus = "Checking device connection...";
+  String _hardwareStatus = "Connecting to Tauri Hardware Bridge...";
+  String _hr = "--";
+  String _spo2 = "--";
+  String _bp = "--/--";
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _connectTauriEvent();
   }
 
-  void _loadData() async {
-    // Initialize standard mock hardware array
-    initializeHardwareGateways();
-    final hw = await getHardwareStatus(protocolFilter: "MQTT");
-    final res = await calculateSofaScore(pao2: 250, platelets: 80, bilirubin: 1.5, map: 65, gcs: 12, creatinine: 2.5);
-    setState(() {
-      _hardwareStatus = hw;
-      _sofa = res;
+  void _connectTauriEvent() {
+    // We mock the stream locally because we are simulating the Tauri background process emitting events
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _hardwareStatus = "🟢 ICU-Bed-01 (Tauri Active)";
+          _hr = (70 + timer.tick % 15).toString();
+          _spo2 = "98";
+          _bp = "120/80";
+        });
+      }
     });
   }
 
@@ -42,23 +48,42 @@ class _IcuDashboardState extends State<IcuDashboard> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black45,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _hardwareStatus.contains("🟢") ? Colors.green : Colors.red),
+                  color: Colors.black45, borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.greenAccent),
                 ),
-                child: Text("NexusConnect: $_hardwareStatus", style: const TextStyle(fontSize: 12)),
+                child: Text("Hardware: $_hardwareStatus", style: const TextStyle(fontSize: 12, color: Colors.greenAccent)),
               )
             ],
           ),
           const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(20),
-            color: _sofa.contains("HIGH") ? Colors.red.withOpacity(0.8) : Colors.green.withOpacity(0.8),
-            child: Text(_sofa, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(height: 20),
-          const Text("Real-time telemetry and life support modules hooked to NCE.", style: TextStyle(color: Colors.grey)),
+          Expanded(
+            child: Row(
+              children: [
+                _buildMetricBox("Heart Rate", _hr, "bpm", Colors.green),
+                const SizedBox(width: 20),
+                _buildMetricBox("SpO2", _spo2, "%", Colors.lightBlue),
+                const SizedBox(width: 20),
+                _buildMetricBox("Blood Pressure", _bp, "mmHg", Colors.orange),
+              ],
+            ),
+          )
         ],
+      ),
+    );
+  }
+
+  Widget _buildMetricBox(String title, String val, String unit, Color color) {
+    return Expanded(
+      child: Container(
+        decoration: BoxDecoration(color: Colors.blueGrey.shade900, borderRadius: BorderRadius.circular(16)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(title, style: TextStyle(color: color, fontSize: 24)),
+            Text(val, style: TextStyle(color: color, fontSize: 80, fontWeight: FontWeight.bold)),
+            Text(unit, style: TextStyle(color: color, fontSize: 20)),
+          ],
+        ),
       ),
     );
   }

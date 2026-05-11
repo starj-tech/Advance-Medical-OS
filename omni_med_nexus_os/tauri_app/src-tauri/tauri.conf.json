@@ -1,0 +1,76 @@
+{
+  "build": {
+    "beforeDevCommand": "cd ../../ui_app && flutter build web",
+    "beforeBuildCommand": "cd ../../ui_app && flutter build web",
+    "devPath": "../../ui_app/build/web",
+    "distDir": "../../ui_app/build/web"
+  },
+  "package": {
+    "productName": "OmniMedNexusOS",
+    "version": "1.0.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "window": {
+        "all": false,
+        "close": true,
+        "hide": true,
+        "maximize": true,
+        "minimize": true,
+        "show": true,
+        "unmaximize": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "category": "Healthcare",
+      "copyright": "Omni-Med Inc",
+      "deb": {
+        "depends": []
+      },
+      "externalBin": [],
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "com.omnimed.nexusos",
+      "longDescription": "The App of Everything for Healthcare",
+      "macOS": {
+        "entitlements": null,
+        "exceptionDomain": "",
+        "frameworks": [],
+        "providerShortName": null,
+        "signingIdentity": null
+      },
+      "resources": [],
+      "shortDescription": "Pulse of Healthcare",
+      "targets": "all",
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
+      }
+    },
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://modelviewer.dev; connect-src 'self';"
+    },
+    "updater": {
+      "active": false
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "height": 900,
+        "resizable": true,
+        "title": "Omni-Med Nexus OS",
+        "width": 1440,
+        "minWidth": 1024,
+        "minHeight": 768
+      }
+    ]
+  }
+}
