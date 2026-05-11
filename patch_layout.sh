@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > omni_med_nexus_os/ui_app/lib/dashboards/router.dart
 import 'package:flutter/material.dart';
 import '../src/rust/api.dart';
 import '../design/pulse_theme.dart';
@@ -14,7 +16,6 @@ import 'primary_care_dashboards.dart';
 import 'surgery_dashboards.dart';
 import 'sensory_dashboards.dart';
 import 'diagnostics_dashboards.dart';
-import 'exec_dashboard.dart';
 import 'internal_med_dashboards.dart';
 import 'anes_dashboard.dart';
 import 'ortho_dashboard.dart';
@@ -145,3 +146,4 @@ class _RoleDashboardRouterState extends State<RoleDashboardRouter> {
     );
   }
 }
+INNER_EOF

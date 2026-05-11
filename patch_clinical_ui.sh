@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > omni_med_nexus_os/ui_app/lib/dashboards/er_dashboard.dart
 import 'package:flutter/material.dart';
 
 class ERDashboard extends StatelessWidget {
@@ -67,3 +69,4 @@ class ERDashboard extends StatelessWidget {
     );
   }
 }
+INNER_EOF
