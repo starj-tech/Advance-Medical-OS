@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > omni_med_nexus_os/ui_app/lib/dashboards/ortho_dashboard.dart
 import 'package:flutter/material.dart';
 
 class OrthopedicDashboard extends StatelessWidget {
@@ -92,3 +94,4 @@ class GridPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+INNER_EOF
