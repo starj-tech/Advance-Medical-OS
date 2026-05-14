@@ -20,3 +20,6 @@ build/
 # Exclude FRB generated caches/binaries
 /ui_app/rust_builder/
 /ui_app/rust/target/
+# Next.js
+/next_app/node_modules
+/next_app/.next
