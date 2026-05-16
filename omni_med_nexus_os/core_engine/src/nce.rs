@@ -37,3 +37,48 @@ pub fn cross_check_safety(patient_condition: &str, drug: &str) -> String {
         "SAFETY CHECK: Clear. No known severe interactions found.".to_string()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cross_check_safety_asthma_beta_blocker() {
+        let condition = "Patient has severe Asthma";
+        let drug = "Propranolol (beta-blocker)";
+        let result = cross_check_safety(condition, drug);
+        assert_eq!(result, "CONTRAINDICATION DETECTED: Beta-blockers can trigger severe asthma attacks.");
+    }
+
+    #[test]
+    fn test_cross_check_safety_kidney_failure_nsaid() {
+        let condition = "Chronic kidney failure stage 3";
+        let drug = "Ibuprofen (NSAID)";
+        let result = cross_check_safety(condition, drug);
+        assert_eq!(result, "CONTRAINDICATION DETECTED: NSAIDs can worsen renal function.");
+    }
+
+    #[test]
+    fn test_cross_check_safety_clear() {
+        let condition = "Healthy adult";
+        let drug = "Vitamin C";
+        let result = cross_check_safety(condition, drug);
+        assert_eq!(result, "SAFETY CHECK: Clear. No known severe interactions found.");
+    }
+
+    #[test]
+    fn test_cross_check_safety_case_insensitivity() {
+        let condition = "AsThMa";
+        let drug = "BeTa-BlOcKeR";
+        let result = cross_check_safety(condition, drug);
+        assert_eq!(result, "CONTRAINDICATION DETECTED: Beta-blockers can trigger severe asthma attacks.");
+    }
+
+    #[test]
+    fn test_cross_check_safety_empty_strings() {
+        let condition = "";
+        let drug = "";
+        let result = cross_check_safety(condition, drug);
+        assert_eq!(result, "SAFETY CHECK: Clear. No known severe interactions found.");
+    }
+}
