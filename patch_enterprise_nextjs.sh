@@ -1,3 +1,91 @@
+#!/bin/bash
+
+# 1. Update Nexus Bridge to listen to hardware disconnects
+cat << 'INNER_EOF' > omni_med_nexus_os/next_app/src/lib/nexusBridge.ts
+import { io, Socket } from 'socket.io-client';
+import { useHospitalStore } from '../store';
+
+class NexusBridge {
+  private socket: Socket | null = null;
+  public isConnected: boolean = false;
+
+  connect() {
+    if (this.isConnected) return;
+
+    // In Tauri environment, we use local IPC. For Web/mock we use WebSockets.
+    this.socket = io('ws://localhost:9090', { reconnectionDelayMax: 10000 });
+
+    this.socket.on('connect', () => {
+      this.isConnected = true;
+      useHospitalStore.getState().setHardwareStatus("CONNECTED");
+    });
+
+    this.socket.on('disconnect', () => {
+      this.isConnected = false;
+      useHospitalStore.getState().setHardwareStatus("DISCONNECTED");
+      useHospitalStore.getState().addAlert("SYSTEM: Nexus Bridge Offline. Manual mode enabled.");
+    });
+
+    // Hardware Watchdog from Rust
+    this.socket.on('hardware-stream-error', (errorMsg: string) => {
+      useHospitalStore.getState().setHardwareStatus("ERROR");
+      useHospitalStore.getState().addAlert(errorMsg);
+    });
+
+    this.socket.on('hardware-stream-icu', (data: any) => {
+      useHospitalStore.getState().setHardwareStatus("CONNECTED");
+      useHospitalStore.getState().updateHardwareData(data);
+    });
+  }
+
+  triggerRollback() {
+    console.log("Triggering 1-Click Rollback to Tauri Backend...");
+    this.socket?.emit('trigger-rollback');
+    useHospitalStore.getState().addAlert("EMERGENCY ROLLBACK INITIATED. Reverting to legacy DB.");
+  }
+}
+
+export const nexusBridge = new NexusBridge();
+INNER_EOF
+
+# 2. Update Zustand Store
+cat << 'INNER_EOF' > omni_med_nexus_os/next_app/src/store.ts
+import { create } from 'zustand';
+
+interface HardwareData {
+  device_id: string;
+  heart_rate: number;
+  spo2: number;
+  blood_pressure: string;
+}
+
+interface HospitalState {
+  userRole: string | null;
+  hardwareData: HardwareData | null;
+  hardwareStatus: "CONNECTED" | "DISCONNECTED" | "ERROR" | "CONNECTING";
+  ewsAlerts: string[];
+  login: (role: string) => void;
+  logout: () => void;
+  updateHardwareData: (data: HardwareData) => void;
+  setHardwareStatus: (status: "CONNECTED" | "DISCONNECTED" | "ERROR" | "CONNECTING") => void;
+  addAlert: (alert: string) => void;
+}
+
+export const useHospitalStore = create<HospitalState>((set) => ({
+  userRole: null,
+  hardwareData: null,
+  hardwareStatus: "CONNECTING",
+  ewsAlerts: [],
+  login: (role) => set({ userRole: role }),
+  logout: () => set({ userRole: null, hardwareData: null, ewsAlerts: [] }),
+  updateHardwareData: (data) => set({ hardwareData: data }),
+  setHardwareStatus: (status) => set({ hardwareStatus: status }),
+  addAlert: (alert) => set((state) => ({ ewsAlerts: [...state.ewsAlerts, alert] })),
+}));
+INNER_EOF
+
+# 3. Create Support Widget & Update ER UI
+cat << 'INNER_EOF' > omni_med_nexus_os/next_app/src/app/page.tsx
 'use client';
 import { useEffect, useState } from 'react';
 import { useHospitalStore } from '@/store';
@@ -109,3 +197,4 @@ export default function Home() {
     </main>
   );
 }
+INNER_EOF
