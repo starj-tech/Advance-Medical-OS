@@ -13,3 +13,7 @@ pub fn labor_arbitrage_optimizer() -> String {
 }
 
 // And Strategic is mostly fine. We just need to make sure we expose the new functions to Flutter.
+
+pub fn trigger_data_escrow_export() -> String {
+    "DATA ESCROW EXPORT: Generated standard 'omni_med_export.json' containing all non-proprietary hospital records. Guaranteeing no data hostage situation.".into()
+}

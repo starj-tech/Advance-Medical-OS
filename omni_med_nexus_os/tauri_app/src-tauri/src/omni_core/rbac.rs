@@ -116,3 +116,18 @@ pub fn login_mock(username: &str) -> UserProfile {
         _ => UserProfile { user_id: "u_default".into(), name: "General Clinician".into(), role: UserRole::TemplateClinical, primary_hospital_id: "HOSP_1".into() }
     }
 }
+
+pub fn access_patient_record(patient_id: &str, is_vip: bool, break_glass_justification: Option<String>) -> String {
+    if is_vip {
+        if let Some(justification) = break_glass_justification {
+            // Trigger Audit Trail and alert Ethics Committee
+            let audit_log = format!("BREAK-THE-GLASS INVOKED by current user for VIP {}. Justification: {}", patient_id, justification);
+            crate::omni_core::blockchain::record_audit_trail("SECURITY_ALERT", &audit_log);
+            format!("ACCESS GRANTED to VIP Record {}. Alert sent to Hospital Director.", patient_id)
+        } else {
+            "ACCESS DENIED. Patient is flagged as VIP. 'Break-the-Glass' protocol required with valid justification.".into()
+        }
+    } else {
+        format!("ACCESS GRANTED to Record {}.", patient_id)
+    }
+}

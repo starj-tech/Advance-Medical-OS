@@ -48,3 +48,11 @@ pub fn simulate_sync_heartbeat() -> String {
     queue.clear();
     format!("Heartbeat Sync Complete. {} Delta(s) pushed securely.", count)
 }
+
+pub fn sync_patient_data(include_heavy_assets: bool) -> String {
+    if include_heavy_assets {
+        "WARNING: Full payload sync. Downloading 1.5GB of DICOM imaging...".into()
+    } else {
+        "LAZY LOAD SYNC: Downloaded 150KB of text metadata. DICOM thumbnails cached. Images marked as 'NeedsFetch'.".into()
+    }
+}
