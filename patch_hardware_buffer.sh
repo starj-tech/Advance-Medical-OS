@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > omni_med_nexus_os/tauri_app/src-tauri/src/hardware_bridge.rs
 use std::time::Duration;
 use tauri::{AppHandle, Manager};
 use tokio::time::sleep;
@@ -147,3 +149,4 @@ pub fn spawn_hardware_bridge(app: AppHandle) {
         }
     });
 }
+INNER_EOF
