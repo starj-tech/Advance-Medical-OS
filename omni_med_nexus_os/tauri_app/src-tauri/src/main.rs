@@ -8,7 +8,7 @@ pub mod hardware_bridge;
 
 use omni_core::api::*;
 use omni_core::rbac::{login_mock, UserProfile};
-use hardware_bridge::spawn_icu_monitor_stream;
+use hardware_bridge::spawn_hardware_bridge;
 use tauri::Manager;
 
 // Updated to return Result<String, String> for robust error handling
@@ -70,7 +70,7 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let app_handle = app.handle();
-            spawn_icu_monitor_stream(app_handle);
+            spawn_hardware_bridge(app_handle);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
