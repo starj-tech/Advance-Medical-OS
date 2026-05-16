@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > omni_med_nexus_os/next_app/src/app/page.tsx
 'use client';
 import { useEffect, useState } from 'react';
 import { useHospitalStore } from '@/store';
@@ -121,3 +123,4 @@ export default function Home() {
     </main>
   );
 }
+INNER_EOF
