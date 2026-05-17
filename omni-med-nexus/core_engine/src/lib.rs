@@ -1,4 +1,5 @@
 pub mod blockchain;
+pub mod database;
 
 #[cfg(test)]
 mod tests {

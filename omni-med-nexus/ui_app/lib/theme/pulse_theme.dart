@@ -5,7 +5,9 @@ class PulseDesignSystem {
   static const Color cyanLight = Color(0xFF92DCE5);
   static const Color boneWhite = Color(0xFFF8F7F9);
   static const Color darkNavy = Color(0xFF2B2D42);
-  static const Color greenOrganic = Color(0xFF2E8B57); // Green butterfly organic accent
+  static const Color greenOrganic = Color(
+    0xFF2E8B57,
+  ); // Green butterfly organic accent
 
   static ThemeData get themeData {
     return ThemeData(
