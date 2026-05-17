@@ -1,0 +1,37 @@
+# Node
+node_modules/
+.next/
+dist/
+build/
+*.log
+
+# Rust
+target/
+Cargo.lock
+
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+*.xcworkspace/
+*.xcodeproj/
+.idea/
+
+# Mac
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Others
+coverage/
+
+# Everything inside the old directory that seems to be causing diff issues
+omni_med_nexus_os/
+patch_*.sh
+omni_med_nexus_os/
+patch_*.sh
