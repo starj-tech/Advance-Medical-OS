@@ -137,7 +137,7 @@ class _ClinicalModuleState extends State<ClinicalModule> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: PulseDesignSystem.cyanLight.withOpacity(0.2),
+                  color: PulseDesignSystem.cyanLight.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: PulseDesignSystem.cyanLight, width: 2),
                 ),
@@ -266,7 +266,7 @@ class _OperationalModuleState extends State<OperationalModule> {
       width: 300,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color),
       ),
@@ -339,7 +339,7 @@ class _StrategicModuleState extends State<StrategicModule> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 2, blurRadius: 5)
+          BoxShadow(color: Colors.grey.withValues(alpha: 0.2), spreadRadius: 2, blurRadius: 5)
         ]
       ),
       child: Row(

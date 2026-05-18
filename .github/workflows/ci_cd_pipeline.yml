@@ -1,0 +1,94 @@
+name: Omni-Med Nexus OS CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "staging" ]
+  pull_request:
+    branches: [ "main", "staging" ]
+
+jobs:
+  core-engine-tests:
+    name: Rust Core Engine Tests & Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          components: rustfmt, clippy
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            omni-med-nexus/core_engine/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Check Formatting
+        working-directory: ./omni-med-nexus/core_engine
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy Linter
+        working-directory: ./omni-med-nexus/core_engine
+        run: cargo clippy -- -D warnings
+
+      - name: Run Unit Tests
+        working-directory: ./omni-med-nexus/core_engine
+        run: cargo test --verbose
+
+  flutter-ui-tests:
+    name: Flutter UI Tests & Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Dependencies
+        working-directory: ./omni-med-nexus/ui_app
+        run: flutter pub get
+
+      - name: Check Formatting
+        working-directory: ./omni-med-nexus/ui_app
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Run Flutter Analyzer
+        working-directory: ./omni-med-nexus/ui_app
+        run: flutter analyze
+
+      - name: Run Widget Tests
+        working-directory: ./omni-med-nexus/ui_app
+        run: flutter test
+
+  infrastructure-validation:
+    name: Terraform Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        working-directory: ./omni-med-nexus/infrastructure/terraform
+        run: terraform init -backend=false
+
+      - name: Terraform Format Check
+        working-directory: ./omni-med-nexus/infrastructure/terraform
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        working-directory: ./omni-med-nexus/infrastructure/terraform
+        run: terraform validate
