@@ -1,11 +1,11 @@
 # Virtual Private Cloud (VPC) for complete isolation
 resource "google_compute_network" "omni_med_vpc" {
-  name                    = "omni-med-vpc"
+  name                    = "omni-med-vpc-${var.environment}"
   auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "omni_med_subnet" {
-  name          = "omni-med-subnet"
+  name          = "omni-med-subnet-${var.environment}"
   ip_cidr_range = "10.0.0.0/16"
   region        = var.region
   network       = google_compute_network.omni_med_vpc.id
@@ -13,7 +13,7 @@ resource "google_compute_subnetwork" "omni_med_subnet" {
 
 # Firewall to block all ingress by default, only allow specific ports
 resource "google_compute_firewall" "allow_internal" {
-  name    = "omni-med-allow-internal"
+  name    = "omni-med-allow-internal-${var.environment}"
   network = google_compute_network.omni_med_vpc.name
 
   allow {

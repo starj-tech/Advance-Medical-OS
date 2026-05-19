@@ -20,3 +20,9 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "environment" {
+  description = "The deployment environment (e.g. staging, production)"
+  type        = string
+  default     = "staging"
+}
