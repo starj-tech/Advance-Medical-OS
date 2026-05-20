@@ -44,3 +44,4 @@ omni-med-nexus/ui_app/linux/
 omni-med-nexus/ui_app/macos/
 omni-med-nexus/ui_app/windows/
 omni-med-nexus/ui_app/rust_builder/
+omni-med-nexus/tauri_app/src-tauri/target/
