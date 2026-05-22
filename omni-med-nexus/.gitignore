@@ -1,3 +1,5 @@
-ui_app/
-super_admin_web/node_modules
-super_admin_web/.next
+node_modules/
+.next/
+dist/
+build/
+*.log
