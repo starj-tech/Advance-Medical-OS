@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [abecca_main, abecca_admin, abecca_demo, abecca_it, super_admin_web]
+        app: [abecca_main, abecca_admin, abecca_demo, abecca_it]
 
     steps:
       - uses: actions/checkout@v4

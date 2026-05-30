@@ -5,7 +5,7 @@
 
 > [!WARNING]
 > **Project status: early scaffold.** The major building blocks exist independently —
-> a Rust core engine, five Next.js front-ends, and Terraform-managed cloud
+> a Rust core engine, four Next.js front-ends, and Terraform-managed cloud
 > infrastructure — but they are **not yet wired together end-to-end**. The front-ends
 > render static / placeholder UI, and the core engine is currently a library with no
 > API server. Treat this repository as an architectural skeleton, not a production system.
@@ -15,7 +15,7 @@
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  Front-ends (Next.js 16 · React 19 · Tailwind 4)             │
-│  super_admin_web · abecca_main · abecca_admin · _demo · _it   │
+│  abecca_main · abecca_admin · abecca_demo · abecca_it         │
 └──────────────────────────────────────────────────────────────┘
                    ▲  (integration layer not built yet)
 ┌──────────────────────────────────────────────────────────────┐
@@ -38,11 +38,10 @@ Advance-Medical-OS/
 ├── .github/workflows/ci_cd_pipeline.yml   # CI: Rust, web apps, Terraform
 └── omni-med-nexus/
     ├── core_engine/               # Rust library: blockchain audit, AES-256-GCM, DB pools, seeder
-    ├── super_admin_web/           # Next.js — super-admin control tower
-    ├── abecca_main/               # Next.js — clinical portal
-    ├── abecca_admin/              # Next.js — hospital administration
-    ├── abecca_demo/               # Next.js — demo & training sandbox
-    ├── abecca_it/                 # Next.js — IT operations console
+    ├── abecca_main/               # Next.js — clinical portal (public-facing)
+    ├── abecca_admin/              # Next.js — hospital administration (internal)
+    ├── abecca_demo/               # Next.js — demo & training sandbox (internal)
+    ├── abecca_it/                 # Next.js — IT operations console (internal)
     ├── infrastructure/terraform/  # GCP: Cloud SQL (HA), VPC
     └── docker-compose.yml         # Local PostgreSQL + Redis + Qdrant
 ```
@@ -83,14 +82,27 @@ cargo fmt --all -- --check      # formatting check
 Each app is independent. For example:
 
 ```bash
-cd omni-med-nexus/super_admin_web
+cd omni-med-nexus/abecca_main
 npm install
 npm run dev                     # http://localhost:3000
 ```
 
 To run several apps at once, give each its own port: `npm run dev -- -p 3001`.
-The five apps are: `super_admin_web`, `abecca_main`, `abecca_admin`, `abecca_demo`,
-`abecca_it`.
+The four apps are: `abecca_main`, `abecca_admin`, `abecca_demo`, `abecca_it`.
+
+#### Deploying the front-ends
+
+Each app is a self-contained Next.js project, ready to deploy to a PaaS such as
+Vercel or Netlify. Set the project root to the app directory (e.g.
+`omni-med-nexus/abecca_main`); the bundled `vercel.json` pins the Next.js preset.
+
+Per-app production hardening is already in place: security headers
+(`next.config.ts`), full SEO/OpenGraph metadata, PWA manifest, `robots.txt` and
+`sitemap.xml`, plus `not-found` / `error` / `loading` boundaries. Each app's
+public identity lives in `src/config/site.ts`. Set `NEXT_PUBLIC_SITE_URL` (see
+`.env.example`) so canonical URLs, `robots.txt` and the sitemap resolve to the
+real domain. `abecca_main` is indexable; the admin, demo and IT consoles are
+marked `noindex` by default.
 
 ### 4. Infrastructure (Terraform, optional)
 
@@ -107,7 +119,7 @@ terraform validate
 `staging`:
 
 - **core-engine-tests** — `cargo fmt`, `cargo clippy -D warnings`, `cargo test`
-- **web-apps** — `npm ci`, `npm run lint`, `npm run build` for all five apps (matrix)
+- **web-apps** — `npm ci`, `npm run lint`, `npm run build` for all four apps (matrix)
 - **infrastructure-validation** — `terraform fmt -check`, `terraform validate`
 
 ## Security notes
