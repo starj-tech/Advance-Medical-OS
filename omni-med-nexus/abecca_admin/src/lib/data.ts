@@ -95,6 +95,12 @@ const invoices: Invoice[] = [
 export const invoiceTotal = (inv: Invoice) =>
   inv.lines.reduce((s, l) => s + l.amount, 0);
 
+/** Synchronous seed snapshots for the client store (cloned before mutation). */
+export const seedInvoices: Invoice[] = invoices;
+export const seedWards: Ward[] = wards;
+export const seedStaff: Staff[] = staff;
+export const seedFormulary: FormularyItem[] = formulary;
+
 export async function getWards(): Promise<Ward[]> {
   return wards;
 }
