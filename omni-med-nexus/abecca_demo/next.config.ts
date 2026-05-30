@@ -36,6 +36,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [{ source: "/", destination: "/showcase", permanent: false }];
+  },
 };
 
 export default nextConfig;
