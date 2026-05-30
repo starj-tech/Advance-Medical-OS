@@ -2,10 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Search } from "lucide-react";
-import type { AcuityLevel, Patient } from "@/lib/types";
+import { ChevronRight, Search, UserPlus } from "lucide-react";
+import type { AcuityLevel } from "@/lib/types";
+import { usePatients } from "@/lib/store";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { AcuityBadge } from "@/components/ui/acuity-badge";
+import { AdmitPatientDialog } from "@/components/clinical/admit-patient-dialog";
 import { cn, formatDate, initials } from "@/lib/utils";
 
 const filters: { key: AcuityLevel | "all"; label: string }[] = [
@@ -15,13 +18,17 @@ const filters: { key: AcuityLevel | "all"; label: string }[] = [
   { key: "stable", label: "Stable" },
 ];
 
-export function PatientsTable({ patients }: { patients: Patient[] }) {
+export function PatientsTable() {
+  const patients = usePatients();
   const [query, setQuery] = useState("");
   const [acuity, setAcuity] = useState<AcuityLevel | "all">("all");
+  const [showDischarged, setShowDischarged] = useState(false);
+  const [admitOpen, setAdmitOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return patients
+      .filter((p) => (showDischarged ? true : !p.dischargedAt))
       .filter((p) => (acuity === "all" ? true : p.acuity === acuity))
       .filter((p) =>
         q === ""
@@ -36,7 +43,7 @@ export function PatientsTable({ patients }: { patients: Patient[] }) {
             ),
       )
       .sort((a, b) => b.vitals.ews - a.vitals.ews);
-  }, [patients, query, acuity]);
+  }, [patients, query, acuity, showDischarged]);
 
   return (
     <div className="flex flex-col gap-4 animate-fade-in">
@@ -69,6 +76,10 @@ export function PatientsTable({ patients }: { patients: Patient[] }) {
             </button>
           ))}
         </div>
+        <Button onClick={() => setAdmitOpen(true)} className="shrink-0">
+          <UserPlus className="size-4" />
+          Admit
+        </Button>
       </div>
 
       {/* Table (desktop) */}
@@ -97,7 +108,12 @@ export function PatientsTable({ patients }: { patients: Patient[] }) {
                       {initials(p.name)}
                     </span>
                     <span className="min-w-0">
-                      <span className="block font-medium">{p.name}</span>
+                      <span className="flex items-center gap-2 font-medium">
+                        {p.name}
+                        {p.dischargedAt && (
+                          <Badge variant="muted">Discharged</Badge>
+                        )}
+                      </span>
                       <span className="block text-xs text-muted-foreground">
                         {p.id} · {p.age}y · {p.sex === "male" ? "M" : "F"}
                       </span>
@@ -112,11 +128,15 @@ export function PatientsTable({ patients }: { patients: Patient[] }) {
                 </td>
                 <td className="px-5 py-3">
                   <div className="flex flex-wrap gap-1">
-                    {p.diagnoses.map((d) => (
-                      <Badge key={d.code} variant="muted" title={d.description}>
-                        {d.code}
-                      </Badge>
-                    ))}
+                    {p.diagnoses.length === 0 ? (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    ) : (
+                      p.diagnoses.map((d) => (
+                        <Badge key={d.code} variant="muted" title={d.description}>
+                          {d.code}
+                        </Badge>
+                      ))
+                    )}
                   </div>
                 </td>
                 <td className="px-5 py-3 text-center font-semibold tabular-nums">
@@ -181,9 +201,22 @@ export function PatientsTable({ patients }: { patients: Patient[] }) {
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Showing {filtered.length} of {patients.length} patients
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          Showing {filtered.length} of {patients.length} patients
+        </p>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={showDischarged}
+            onChange={(e) => setShowDischarged(e.target.checked)}
+            className="size-3.5 rounded border-border accent-primary"
+          />
+          Show discharged
+        </label>
+      </div>
+
+      <AdmitPatientDialog open={admitOpen} onClose={() => setAdmitOpen(false)} />
     </div>
   );
 }

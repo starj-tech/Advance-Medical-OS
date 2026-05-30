@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { getPatients } from "@/lib/data";
 import { PatientsTable } from "./patients-table";
 
 export const metadata: Metadata = { title: "Patients" };
 
-export default async function PatientsPage() {
-  const patients = await getPatients();
+export default function PatientsPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -14,7 +12,7 @@ export default async function PatientsPage() {
           engine — only masked identifiers are shown here.
         </p>
       </div>
-      <PatientsTable patients={patients} />
+      <PatientsTable />
     </div>
   );
 }

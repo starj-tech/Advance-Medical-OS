@@ -78,8 +78,12 @@ export interface Patient {
   attendingDoctorId: string;
   acuity: AcuityLevel;
   vitals: VitalSigns;
+  /** Chronological vitals observations (oldest → newest) for trend charts. */
+  vitalsHistory: VitalSigns[];
   diagnoses: Diagnosis[];
   allergies: string[];
+  /** Set once a patient is discharged; absent while admitted. */
+  dischargedAt?: string;
 }
 
 /** A medication line in the hospital formulary. Mirrors `formulary`. */

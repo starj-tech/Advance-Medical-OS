@@ -19,8 +19,9 @@ import type {
   FormularyItem,
   Patient,
   Tariff,
+  VitalSigns,
 } from "./types";
-import { acuityFromEws } from "./utils";
+import { acuityFromEws, computeEws } from "./utils";
 
 /* -------------------------------------------------------------------------- */
 /* ICD-10 master (verbatim from seeder.rs)                                     */
@@ -40,7 +41,7 @@ function dx(code: keyof typeof icd10 | string, diagnosedAt: string): Diagnosis {
 /* Patients                                                                    */
 /* -------------------------------------------------------------------------- */
 
-const rawPatients: Omit<Patient, "acuity">[] = [
+const rawPatients: Omit<Patient, "acuity" | "vitalsHistory">[] = [
   {
     id: "PAT-123",
     name: "Andi Wijaya",
@@ -175,9 +176,37 @@ const rawPatients: Omit<Patient, "acuity">[] = [
   },
 ];
 
+/**
+ * Synthesize a short series of prior observations that trend toward the
+ * patient's current vitals, so the trend chart has real history to draw.
+ * The final entry is always the current reading.
+ */
+function seedHistory(current: VitalSigns): VitalSigns[] {
+  const points = 5;
+  const now = new Date(current.recordedAt).getTime();
+  const hist: VitalSigns[] = [];
+  for (let i = points - 1; i >= 1; i--) {
+    const drift = i; // older readings are slightly further from current
+    const v = {
+      heartRate: Math.round(current.heartRate - drift * 1.5 + (i % 2 ? 2 : -2)),
+      systolicBp: Math.round(current.systolicBp + drift * 1.2 + (i % 2 ? -3 : 3)),
+      respiratoryRate: Math.max(8, Math.round(current.respiratoryRate - drift * 0.6)),
+      temperature: Math.round((current.temperature - drift * 0.12) * 10) / 10,
+      spo2: Math.min(100, Math.round(current.spo2 + drift * 0.8)),
+      ews: 0,
+      recordedAt: new Date(now - i * 6 * 3600 * 1000).toISOString(),
+    };
+    v.ews = computeEws(v);
+    hist.push(v);
+  }
+  hist.push(current);
+  return hist;
+}
+
 const patients: Patient[] = rawPatients.map((p) => ({
   ...p,
   acuity: acuityFromEws(p.vitals.ews),
+  vitalsHistory: seedHistory(p.vitals),
 }));
 
 /* -------------------------------------------------------------------------- */
@@ -215,7 +244,7 @@ import type { AuditAction } from "./types";
  * (index|timestamp|patient|action|doctor|prev_hash); we only need stable,
  * realistic-looking, *linked* values for display here.
  */
-function pseudoHash(seed: string): string {
+export function pseudoHash(seed: string): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < seed.length; i++) {
     h ^= seed.charCodeAt(i);
@@ -279,6 +308,14 @@ function buildChain(): AuditBlock[] {
 }
 
 const auditChain = buildChain();
+
+/**
+ * Synchronous seed snapshots for the client store. The store clones these so
+ * its mutations never touch the shared module arrays (important on the server,
+ * where this module is a singleton across requests).
+ */
+export const seedPatients: Patient[] = patients;
+export const seedAuditChain: AuditBlock[] = auditChain;
 
 /** Re-runs the same validation logic as `Blockchain::is_chain_valid()`. */
 export function isChainValid(chain: AuditBlock[]): boolean {

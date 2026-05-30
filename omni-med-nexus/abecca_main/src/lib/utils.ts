@@ -22,11 +22,16 @@ export function formatNumber(value: number): string {
 }
 
 /** Human date, e.g. "5 Jan 2026". */
+// Pin to the deployment region's timezone so absolute times render identically
+// on the server (UTC build host) and the client (any locale) — no hydration gap.
+const TZ = "Asia/Jakarta";
+
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: TZ,
   });
 }
 
@@ -38,6 +43,7 @@ export function formatDateTime(iso: string): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: TZ,
   });
 }
 
@@ -110,4 +116,55 @@ export function initials(name: string): string {
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
     .join("");
+}
+
+/**
+ * Compute an aggregate Early Warning Score from raw vitals, following the
+ * NEWS2 banding (0–3 points per parameter). Returns a 0–20+ score that
+ * `acuityFromEws` then maps onto a clinical acuity band. Centralising this
+ * means recorded vitals drive the score instead of it being stored by hand.
+ */
+export function computeEws(v: {
+  heartRate: number;
+  systolicBp: number;
+  respiratoryRate: number;
+  temperature: number;
+  spo2: number;
+}): number {
+  let score = 0;
+
+  // Respiratory rate
+  if (v.respiratoryRate <= 8) score += 3;
+  else if (v.respiratoryRate <= 11) score += 1;
+  else if (v.respiratoryRate <= 20) score += 0;
+  else if (v.respiratoryRate <= 24) score += 2;
+  else score += 3;
+
+  // SpO2
+  if (v.spo2 <= 91) score += 3;
+  else if (v.spo2 <= 93) score += 2;
+  else if (v.spo2 <= 95) score += 1;
+
+  // Systolic BP
+  if (v.systolicBp <= 90) score += 3;
+  else if (v.systolicBp <= 100) score += 2;
+  else if (v.systolicBp <= 110) score += 1;
+  else if (v.systolicBp >= 220) score += 3;
+
+  // Heart rate
+  if (v.heartRate <= 40) score += 3;
+  else if (v.heartRate <= 50) score += 1;
+  else if (v.heartRate <= 90) score += 0;
+  else if (v.heartRate <= 110) score += 1;
+  else if (v.heartRate <= 130) score += 2;
+  else score += 3;
+
+  // Temperature (°C)
+  if (v.temperature <= 35.0) score += 3;
+  else if (v.temperature <= 36.0) score += 1;
+  else if (v.temperature <= 38.0) score += 0;
+  else if (v.temperature <= 39.0) score += 1;
+  else score += 2;
+
+  return score;
 }
