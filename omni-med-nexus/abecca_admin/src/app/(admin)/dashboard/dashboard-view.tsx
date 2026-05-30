@@ -9,8 +9,8 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { invoiceTotal, seedWards } from "@/lib/data";
-import { useAdminOverview, useInvoices } from "@/lib/store";
+import { invoiceTotal } from "@/lib/data";
+import { useAdminOverview, useInvoices, useWards } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/ui/stat-card";
@@ -27,7 +27,7 @@ const toneBar = { ok: "bg-emerald-500", warning: "bg-amber-500", danger: "bg-ros
 export function DashboardView() {
   const overview = useAdminOverview();
   const invoices = useInvoices();
-  const wards = seedWards;
+  const wards = useWards();
   const recentInvoices = [...invoices]
     .sort((a, b) => +new Date(b.issuedAt) - +new Date(a.issuedAt))
     .slice(0, 4);
