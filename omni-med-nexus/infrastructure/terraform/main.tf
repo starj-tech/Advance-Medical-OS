@@ -6,8 +6,8 @@ terraform {
     }
   }
   backend "gcs" {
-    bucket  = "omni-med-nexus-terraform-state"
-    prefix  = "terraform/state"
+    bucket = "omni-med-nexus-terraform-state"
+    prefix = "terraform/state"
   }
 }
 
