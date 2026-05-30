@@ -15,6 +15,7 @@
 
 import type {
   AuditBlock,
+  ClinicalNote,
   Diagnosis,
   FormularyItem,
   Patient,
@@ -41,7 +42,7 @@ function dx(code: keyof typeof icd10 | string, diagnosedAt: string): Diagnosis {
 /* Patients                                                                    */
 /* -------------------------------------------------------------------------- */
 
-const rawPatients: Omit<Patient, "acuity" | "vitalsHistory">[] = [
+const rawPatients: Omit<Patient, "acuity" | "vitalsHistory" | "notes">[] = [
   {
     id: "PAT-123",
     name: "Andi Wijaya",
@@ -203,10 +204,31 @@ function seedHistory(current: VitalSigns): VitalSigns[] {
   return hist;
 }
 
+/** A couple of seeded chart notes so the notes panel isn't empty on first view. */
+const seedNotes: Record<string, ClinicalNote[]> = {
+  "PAT-123": [
+    {
+      id: "N-1",
+      text: "Admitted via ER with chest pain. Started on cardiac monitoring.",
+      author: "DOC-456",
+      createdAt: "2026-05-30T05:45:00Z",
+    },
+  ],
+  "PAT-204": [
+    {
+      id: "N-2",
+      text: "Responding well to nebuliser. Continue salbutamol q6h.",
+      author: "DOC-781",
+      createdAt: "2026-05-30T05:25:00Z",
+    },
+  ],
+};
+
 const patients: Patient[] = rawPatients.map((p) => ({
   ...p,
   acuity: acuityFromEws(p.vitals.ews),
   vitalsHistory: seedHistory(p.vitals),
+  notes: seedNotes[p.id] ?? [],
 }));
 
 /* -------------------------------------------------------------------------- */
@@ -316,6 +338,8 @@ const auditChain = buildChain();
  */
 export const seedPatients: Patient[] = patients;
 export const seedAuditChain: AuditBlock[] = auditChain;
+export const seedFormulary: FormularyItem[] = formulary;
+export const seedTariffs: Tariff[] = tariffs;
 
 /** Re-runs the same validation logic as `Blockchain::is_chain_valid()`. */
 export function isChainValid(chain: AuditBlock[]): boolean {

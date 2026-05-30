@@ -19,6 +19,8 @@ const actionVariant: Record<
   ADMIT_PATIENT: "success",
   DISCHARGE_PATIENT: "info",
   DISPENSE_MEDICATION: "success",
+  TRANSFER_PATIENT: "info",
+  ADD_NOTE: "default",
 };
 
 export function AuditView() {

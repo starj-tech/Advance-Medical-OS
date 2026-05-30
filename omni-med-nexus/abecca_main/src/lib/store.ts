@@ -20,7 +20,9 @@ import { useSyncExternalStore } from "react";
 import type {
   AuditAction,
   AuditBlock,
+  ClinicalNote,
   Diagnosis,
+  FormularyItem,
   Patient,
   VitalSigns,
 } from "./types";
@@ -29,6 +31,7 @@ import {
   isChainValid,
   pseudoHash,
   seedAuditChain,
+  seedFormulary,
   seedPatients,
 } from "./data";
 import { acuityFromEws, computeEws } from "./utils";
@@ -38,6 +41,7 @@ const ATTENDING = "DOC-456"; // the signed-in clinician (see topbar)
 type State = {
   patients: Patient[];
   chain: AuditBlock[];
+  formulary: FormularyItem[];
 };
 
 // Seed eagerly from the synchronous data layer so SSR and the first client
@@ -46,6 +50,7 @@ type State = {
 let state: State = {
   patients: seedPatients.map((p) => ({ ...p })),
   chain: [...seedAuditChain],
+  formulary: seedFormulary.map((f) => ({ ...f })),
 };
 const listeners = new Set<() => void>();
 
@@ -125,10 +130,63 @@ export function addDiagnosis(patientId: string, code: string) {
   emit();
 }
 
-export function dispenseMedication(patientId: string) {
+/** Dispense a formulary medication to a patient: decrements stock + audits. */
+export function dispenseToPatient(
+  patientId: string,
+  medId: number,
+  quantity: number,
+) {
   state = {
     ...state,
+    formulary: state.formulary.map((f) =>
+      f.id === medId
+        ? { ...f, stockQuantity: Math.max(0, f.stockQuantity - quantity) }
+        : f,
+    ),
     chain: [...state.chain, appendBlock(patientId, "DISPENSE_MEDICATION")],
+  };
+  emit();
+}
+
+/** Inventory restock — not a patient action, so it is not audited. */
+export function restockMedication(medId: number, quantity: number) {
+  state = {
+    ...state,
+    formulary: state.formulary.map((f) =>
+      f.id === medId
+        ? { ...f, stockQuantity: f.stockQuantity + quantity }
+        : f,
+    ),
+  };
+  emit();
+}
+
+export function addNote(patientId: string, text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) return;
+  const note: ClinicalNote = {
+    id: `N-${Date.now()}`,
+    text: trimmed,
+    author: ATTENDING,
+    createdAt: new Date().toISOString(),
+  };
+  state = {
+    ...state,
+    patients: state.patients.map((p) =>
+      p.id === patientId ? { ...p, notes: [...p.notes, note] } : p,
+    ),
+    chain: [...state.chain, appendBlock(patientId, "ADD_NOTE")],
+  };
+  emit();
+}
+
+export function transferPatient(patientId: string, ward: string, bed: string) {
+  state = {
+    ...state,
+    patients: state.patients.map((p) =>
+      p.id === patientId ? { ...p, ward, bed } : p,
+    ),
+    chain: [...state.chain, appendBlock(patientId, "TRANSFER_PATIENT")],
   };
   emit();
 }
@@ -185,6 +243,7 @@ export function admitPatient(input: NewPatientInput): string {
     vitalsHistory: [vitals],
     diagnoses: [],
     allergies: input.allergies,
+    notes: [],
   };
   state = {
     ...state,
@@ -199,12 +258,21 @@ export function admitPatient(input: NewPatientInput): string {
 
 const getPatientsSnapshot = () => state.patients;
 const getChainSnapshot = () => state.chain;
+const getFormularySnapshot = () => state.formulary;
 
 export function usePatients(): Patient[] {
   return useSyncExternalStore(
     subscribe,
     getPatientsSnapshot,
     getPatientsSnapshot,
+  );
+}
+
+export function useFormulary(): FormularyItem[] {
+  return useSyncExternalStore(
+    subscribe,
+    getFormularySnapshot,
+    getFormularySnapshot,
   );
 }
 

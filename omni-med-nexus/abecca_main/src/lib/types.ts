@@ -22,7 +22,9 @@ export type AuditAction =
   | "UPDATE_EWS"
   | "ADMIT_PATIENT"
   | "DISCHARGE_PATIENT"
-  | "DISPENSE_MEDICATION";
+  | "DISPENSE_MEDICATION"
+  | "TRANSFER_PATIENT"
+  | "ADD_NOTE";
 
 /**
  * One block in the audit blockchain.
@@ -61,6 +63,14 @@ export interface Diagnosis {
   diagnosedAt: string; // ISO date
 }
 
+/** A free-text clinical note on a patient's chart. */
+export interface ClinicalNote {
+  id: string;
+  text: string;
+  author: string; // doctor id
+  createdAt: string; // ISO timestamp
+}
+
 /**
  * A patient record as surfaced to the portal (PII already decrypted upstream).
  * Mirrors the `patients` table plus the clinical context the portal renders.
@@ -82,6 +92,8 @@ export interface Patient {
   vitalsHistory: VitalSigns[];
   diagnoses: Diagnosis[];
   allergies: string[];
+  /** Chart notes (newest appended last). */
+  notes: ClinicalNote[];
   /** Set once a patient is discharged; absent while admitted. */
   dischargedAt?: string;
 }

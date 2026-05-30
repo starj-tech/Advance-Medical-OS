@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Activity,
+  ArrowRightLeft,
   ChevronRight,
   Droplet,
   Heart,
   LogOut,
   Lock,
+  NotebookPen,
+  Pill,
   Plus,
   ShieldCheck,
   Stethoscope,
@@ -19,8 +22,8 @@ import {
 import type { Patient } from "@/lib/types";
 import {
   addDiagnosis,
+  addNote,
   dischargePatient,
-  dispenseMedication,
   useAuditChain,
   usePatient,
 } from "@/lib/store";
@@ -34,6 +37,8 @@ import { AcuityBadge } from "@/components/ui/acuity-badge";
 import { EwsGauge } from "@/components/ui/ews-gauge";
 import { VitalsTrend } from "@/components/ui/vitals-trend";
 import { RecordVitalsDialog } from "@/components/clinical/record-vitals-dialog";
+import { DispenseDialog } from "@/components/clinical/dispense-dialog";
+import { TransferDialog } from "@/components/clinical/transfer-dialog";
 
 function vitalCards(p: Patient) {
   const { vitals } = p;
@@ -51,8 +56,11 @@ export function PatientDetail({ id }: { id: string }) {
   const chain = useAuditChain();
   const router = useRouter();
   const [vitalsOpen, setVitalsOpen] = useState(false);
+  const [dispenseOpen, setDispenseOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   const [dxOpen, setDxOpen] = useState(false);
   const [dxCode, setDxCode] = useState(Object.keys(icd10)[0]);
+  const [noteText, setNoteText] = useState("");
 
   if (!patient) {
     return (
@@ -136,9 +144,13 @@ export function PatientDetail({ id }: { id: string }) {
           <Plus className="size-4" />
           Add diagnosis
         </Button>
-        <Button variant="outline" onClick={() => dispenseMedication(patient.id)}>
-          <Plus className="size-4" />
+        <Button variant="outline" onClick={() => setDispenseOpen(true)}>
+          <Pill className="size-4" />
           Dispense med
+        </Button>
+        <Button variant="outline" onClick={() => setTransferOpen(true)}>
+          <ArrowRightLeft className="size-4" />
+          Transfer
         </Button>
         {!patient.dischargedAt && (
           <Button
@@ -261,6 +273,54 @@ export function PatientDetail({ id }: { id: string }) {
 
           <Card>
             <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <NotebookPen className="size-4 text-primary" />
+                Clinical Notes
+              </CardTitle>
+              <Badge variant="muted">{patient.notes.length}</Badge>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {patient.notes.length > 0 && (
+                <ul className="flex flex-col gap-3">
+                  {[...patient.notes].reverse().map((n) => (
+                    <li
+                      key={n.id}
+                      className="rounded-lg border border-border bg-foreground/[0.02] p-3"
+                    >
+                      <p className="text-sm">{n.text}</p>
+                      <p className="mt-1.5 text-xs text-muted-foreground">
+                        {n.author} · <TimeAgo iso={n.createdAt} />
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex flex-col gap-2">
+                <textarea
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Add a clinical note…"
+                  rows={2}
+                  className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/30"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => {
+                      addNote(patient.id, noteText);
+                      setNoteText("");
+                    }}
+                    disabled={noteText.trim().length === 0}
+                  >
+                    <Plus className="size-4" />
+                    Add note
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Access & Change History</CardTitle>
               <Link
                 href="/audit"
@@ -361,6 +421,17 @@ export function PatientDetail({ id }: { id: string }) {
         patient={patient}
         open={vitalsOpen}
         onClose={() => setVitalsOpen(false)}
+      />
+      <DispenseDialog
+        patientId={patient.id}
+        patientName={patient.name}
+        open={dispenseOpen}
+        onClose={() => setDispenseOpen(false)}
+      />
+      <TransferDialog
+        patient={patient}
+        open={transferOpen}
+        onClose={() => setTransferOpen(false)}
       />
     </div>
   );
