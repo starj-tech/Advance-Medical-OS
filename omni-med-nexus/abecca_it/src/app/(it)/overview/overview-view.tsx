@@ -8,8 +8,7 @@ import {
   ShieldAlert,
   ShieldCheck,
 } from "lucide-react";
-import { services } from "@/lib/data";
-import { useIncidents, useItOverview } from "@/lib/store";
+import { useIncidents, useItOverview, useServices } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -21,6 +20,7 @@ const severityVariant = { info: "info", warning: "warning", critical: "danger" }
 export function OverviewView() {
   const overview = useItOverview();
   const incidents = useIncidents();
+  const services = useServices();
   const allHealthy = overview.degraded === 0 && overview.down === 0;
   const openIncidents = incidents.filter((i) => i.status !== "resolved");
 
