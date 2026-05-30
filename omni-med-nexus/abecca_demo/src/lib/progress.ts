@@ -70,14 +70,31 @@ function subscribe(cb: () => void): () => void {
   };
 }
 
+/** Clear all saved progress across every scenario. */
+export function resetAll() {
+  write({});
+}
+
 const EMPTY: Progress = {};
 
 /** Returns the set of completed steps for a scenario as a boolean array. */
 export function useScenarioProgress(scenarioId: string, stepCount: number): boolean[] {
-  const progress = useSyncExternalStore(
-    subscribe,
-    read,
-    () => EMPTY,
-  );
+  const progress = useSyncExternalStore(subscribe, read, () => EMPTY);
   return Array.from({ length: stepCount }, (_, i) => !!progress[key(scenarioId, i)]);
+}
+
+/** Aggregate completed/total steps across the supplied scenarios. */
+export function useOverallProgress(
+  scenarios: { id: string; steps: number }[],
+): { completed: number; total: number } {
+  const progress = useSyncExternalStore(subscribe, read, () => EMPTY);
+  let completed = 0;
+  let total = 0;
+  for (const s of scenarios) {
+    total += s.steps;
+    for (let i = 0; i < s.steps; i++) {
+      if (progress[key(s.id, i)]) completed++;
+    }
+  }
+  return { completed, total };
 }
