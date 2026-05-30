@@ -2,6 +2,7 @@
 
 import { Menu } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export function Topbar({
   title,
@@ -21,10 +22,13 @@ export function Topbar({
         <Menu className="size-5" />
       </button>
       <h1 className="text-base font-semibold tracking-tight">{title}</h1>
-      <Badge variant="success" className="ml-auto">
-        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse-ring" />
-        Live
-      </Badge>
+      <div className="ml-auto flex items-center gap-2">
+        <ThemeToggle />
+        <Badge variant="success">
+          <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse-ring" />
+          Live
+        </Badge>
+      </div>
     </header>
   );
 }

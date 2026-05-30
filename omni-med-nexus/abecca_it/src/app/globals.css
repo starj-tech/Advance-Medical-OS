@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Drive `dark:` utilities from a `.dark` class on <html> (toggled by the theme
+   provider) rather than the OS media query, so the manual toggle wins. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ==========================================================================
    Abecca — Clinical Light design system
    Calm neutral surfaces, a medical teal primary, and clinical status colors.
@@ -20,8 +24,7 @@
   --ring: #0d9488;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+.dark {
     --background: #0a0f16;
     --surface: #111927;
     --foreground: #e6edf3;
@@ -34,7 +37,6 @@
 
     --ring: #2dd4bf;
   }
-}
 
 @theme inline {
   --color-background: var(--background);

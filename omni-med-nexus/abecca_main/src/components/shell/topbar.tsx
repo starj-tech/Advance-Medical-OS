@@ -2,6 +2,7 @@
 
 import { Bell, Menu, Search } from "lucide-react";
 import { initials } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export function Topbar({
   title,
@@ -33,6 +34,8 @@ export function Topbar({
             className="h-9 w-56 rounded-lg border border-border bg-surface pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/30"
           />
         </div>
+
+        <ThemeToggle />
 
         <button
           type="button"
