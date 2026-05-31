@@ -1,144 +1,112 @@
 "use client";
 
 /**
- * In-memory IT-ops store. Holds incidents, services and security controls so
- * the console performs real actions: acknowledge/resolve incidents, change a
- * service's status (which feeds the live health summary), raise an incident
- * from a service, and flip security controls. useSyncExternalStore, seeded
- * eagerly from the data layer; in memory only (resets on reload).
+ * Client store for the Abecca IT operations console — wired to the HTTP API.
+ *
+ * Eager seed gives SSR/first paint fully-populated state; on first subscription
+ * the store revalidates from /api, and every mutation calls the API then pulls
+ * authoritative state. Point NEXT_PUBLIC_API_BASE_URL at the Rust core-engine
+ * API to switch backends without touching a screen.
  */
 
 import { useSyncExternalStore } from "react";
-import type {
-  Incident,
-  SecurityControl,
-  Service,
-  ServiceStatus,
-  Severity,
-} from "./data";
+import type { Incident, SecurityControl, Service, Severity } from "./data";
 import {
   incidents as seedIncidents,
   securityControls as seedControls,
   services as seedServices,
 } from "./data";
+import { api } from "./api";
 
 export type IncidentStatus = Incident["status"];
 
 type State = {
-  incidents: Incident[];
   services: Service[];
+  incidents: Incident[];
   controls: SecurityControl[];
 };
 
 let state: State = {
-  incidents: seedIncidents.map((i) => ({ ...i })),
   services: seedServices.map((s) => ({ ...s })),
+  incidents: seedIncidents.map((i) => ({ ...i })),
   controls: seedControls.map((c) => ({ ...c })),
 };
 
 const listeners = new Set<() => void>();
-function emit() {
+let revalidated = false;
+
+function setState(next: State) {
+  state = next;
   for (const l of listeners) l();
 }
+
 function subscribe(cb: () => void): () => void {
   listeners.add(cb);
+  if (!revalidated) {
+    revalidated = true;
+    void pull();
+  }
   return () => listeners.delete(cb);
 }
 
-/* ------------------------------- incidents -------------------------------- */
-
-function setStatus(id: string, status: IncidentStatus) {
-  state = {
-    ...state,
-    incidents: state.incidents.map((i) =>
-      i.id === id ? { ...i, status } : i,
-    ),
-  };
-  emit();
+async function pull() {
+  try {
+    const [services, incidents, controls] = await Promise.all([
+      api.services(),
+      api.incidents(),
+      api.controls(),
+    ]);
+    setState({ services, incidents, controls });
+  } catch {
+    // keep current snapshot if the API is unreachable
+  }
 }
 
-export const acknowledgeIncident = (id: string) => setStatus(id, "monitoring");
-export const resolveIncident = (id: string) => setStatus(id, "resolved");
-export const reopenIncident = (id: string) => setStatus(id, "open");
+/* -------------------------------- incidents ------------------------------- */
 
-/** Raise a new incident against a service (used from the Services screen). */
-export function createIncident(
+const setIncident = async (id: string, status: IncidentStatus) => {
+  await api.setIncidentStatus(id, status);
+  await pull();
+};
+
+export const acknowledgeIncident = (id: string) => setIncident(id, "monitoring");
+export const resolveIncident = (id: string) => setIncident(id, "resolved");
+export const reopenIncident = (id: string) => setIncident(id, "open");
+
+export async function createIncident(
   service: string,
   severity: Severity,
   title: string,
 ) {
-  const maxNum = state.incidents.reduce((m, i) => {
-    const n = Number(i.id.replace(/\D/g, ""));
-    return Number.isFinite(n) ? Math.max(m, n) : m;
-  }, 1000);
-  const incident: Incident = {
-    id: `INC-${maxNum + 1}`,
-    title,
-    severity,
-    service,
-    status: "open",
-    openedAt: new Date().toISOString(),
-  };
-  state = { ...state, incidents: [incident, ...state.incidents] };
-  emit();
+  await api.createIncident(service, severity, title);
+  await pull();
 }
 
 /* -------------------------------- services -------------------------------- */
 
-const STATUS_CYCLE: ServiceStatus[] = [
-  "operational",
-  "degraded",
-  "down",
-  "maintenance",
-];
-
-/** Advance a service to the next status in the cycle (manual ops override). */
-export function cycleServiceStatus(id: string) {
-  state = {
-    ...state,
-    services: state.services.map((s) => {
-      if (s.id !== id) return s;
-      const next =
-        STATUS_CYCLE[(STATUS_CYCLE.indexOf(s.status) + 1) % STATUS_CYCLE.length];
-      return { ...s, status: next };
-    }),
-  };
-  emit();
+export async function cycleServiceStatus(id: string) {
+  await api.cycleService(id);
+  await pull();
 }
 
-export function setServiceStatus(id: string, status: ServiceStatus) {
-  state = {
-    ...state,
-    services: state.services.map((s) => (s.id === id ? { ...s, status } : s)),
-  };
-  emit();
-}
+/* -------------------------------- security -------------------------------- */
 
-/* ----------------------------- security ----------------------------------- */
-
-export function toggleControl(id: string) {
-  state = {
-    ...state,
-    controls: state.controls.map((c) =>
-      c.id === id
-        ? { ...c, status: c.status === "enforced" ? "review" : "enforced" }
-        : c,
-    ),
-  };
-  emit();
+export async function toggleControl(id: string) {
+  await api.toggleControl(id);
+  await pull();
 }
 
 /* --------------------------------- hooks ---------------------------------- */
 
-const getIncidents = () => state.incidents;
 const getServices = () => state.services;
+const getIncidents = () => state.incidents;
 const getControls = () => state.controls;
 
-export function useIncidents(): Incident[] {
-  return useSyncExternalStore(subscribe, getIncidents, getIncidents);
-}
 export function useServices(): Service[] {
   return useSyncExternalStore(subscribe, getServices, getServices);
+}
+export function useIncidents(): Incident[] {
+  return useSyncExternalStore(subscribe, getIncidents, getIncidents);
 }
 export function useControls(): SecurityControl[] {
   return useSyncExternalStore(subscribe, getControls, getControls);
