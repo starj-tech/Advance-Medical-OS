@@ -42,9 +42,9 @@ export function AdmitPatientDialog({
 
   const valid = name.trim().length > 1 && bed.trim().length > 0;
 
-  const submit = () => {
+  const submit = async () => {
     if (!valid) return;
-    const id = admitPatient({
+    const id = await admitPatient({
       name: name.trim(),
       age,
       sex,
