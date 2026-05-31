@@ -1,11 +1,13 @@
 "use client";
 
 /**
- * In-memory admin store. Holds invoices, wards, formulary and staff so the
- * billing, bed-management, pharmacy and roster screens all perform real
- * actions and feed the dashboard live. Built on useSyncExternalStore, seeded
- * eagerly from the data layer (SSR and first client render match). In memory
- * only — resets on reload until a backend exists.
+ * Client store for the Abecca Admin portal — wired to the HTTP API.
+ *
+ * Eager seed gives SSR/first paint fully-populated state (the server datastore
+ * is seeded from the same source, so the seed equals the API's initial state).
+ * On first subscription the store revalidates from /api; every mutation calls
+ * the API and pulls authoritative state back. Point NEXT_PUBLIC_API_BASE_URL at
+ * the Rust core-engine API to switch backends without touching a screen.
  */
 
 import { useSyncExternalStore } from "react";
@@ -23,6 +25,7 @@ import {
   seedStaff,
   seedWards,
 } from "./data";
+import { api } from "./api";
 
 type State = {
   invoices: Invoice[];
@@ -39,68 +42,61 @@ let state: State = {
 };
 
 const listeners = new Set<() => void>();
-function emit() {
+let revalidated = false;
+
+function setState(next: State) {
+  state = next;
   for (const l of listeners) l();
 }
+
 function subscribe(cb: () => void): () => void {
   listeners.add(cb);
+  if (!revalidated) {
+    revalidated = true;
+    void pull();
+  }
   return () => listeners.delete(cb);
+}
+
+async function pull() {
+  try {
+    const [invoices, wards, formulary, staff] = await Promise.all([
+      api.invoices(),
+      api.wards(),
+      api.formulary(),
+      api.staff(),
+    ]);
+    setState({ invoices, wards, formulary, staff });
+  } catch {
+    // keep current snapshot if the API is unreachable
+  }
 }
 
 /* --------------------------------- actions -------------------------------- */
 
-export function setInvoiceStatus(id: string, status: InvoiceStatus) {
-  state = {
-    ...state,
-    invoices: state.invoices.map((i) => (i.id === id ? { ...i, status } : i)),
-  };
-  emit();
+export async function setInvoiceStatus(id: string, status: InvoiceStatus) {
+  await api.setInvoiceStatus(id, status);
+  await pull();
 }
 
-/** Admit one patient into a ward (occupied +1, capped at capacity). */
-export function admitToWard(wardId: string) {
-  state = {
-    ...state,
-    wards: state.wards.map((w) =>
-      w.id === wardId
-        ? { ...w, occupiedBeds: Math.min(w.totalBeds, w.occupiedBeds + 1) }
-        : w,
-    ),
-  };
-  emit();
+export async function admitToWard(wardId: string) {
+  await api.wardAction(wardId, "admit");
+  await pull();
 }
 
-/** Discharge one patient from a ward (occupied -1, floored at 0). */
-export function dischargeFromWard(wardId: string) {
-  state = {
-    ...state,
-    wards: state.wards.map((w) =>
-      w.id === wardId
-        ? { ...w, occupiedBeds: Math.max(0, w.occupiedBeds - 1) }
-        : w,
-    ),
-  };
-  emit();
+export async function dischargeFromWard(wardId: string) {
+  await api.wardAction(wardId, "discharge");
+  await pull();
 }
 
-export function restockMedication(medId: number, quantity: number) {
-  state = {
-    ...state,
-    formulary: state.formulary.map((f) =>
-      f.id === medId ? { ...f, stockQuantity: f.stockQuantity + quantity } : f,
-    ),
-  };
-  emit();
+export async function restockMedication(medId: number, quantity: number) {
+  await api.restock(medId, quantity);
+  await pull();
 }
 
-export function toggleStaffDuty(id: string) {
-  state = {
-    ...state,
-    staff: state.staff.map((s) =>
-      s.id === id ? { ...s, onDuty: !s.onDuty } : s,
-    ),
-  };
-  emit();
+export async function toggleStaffDuty(id: string) {
+  await api.toggleDuty(id);
+  await pull();
 }
 
 /* --------------------------------- hooks ---------------------------------- */
