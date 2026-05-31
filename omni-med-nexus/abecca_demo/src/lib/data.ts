@@ -16,8 +16,31 @@ import {
   Users,
 } from "lucide-react";
 
+/** Stable string keys so capabilities can travel over the API as JSON. */
+export type IconKey =
+  | "clinical"
+  | "encryption"
+  | "audit"
+  | "wards"
+  | "billing"
+  | "pharmacy"
+  | "staff"
+  | "data";
+
+/** Maps a serializable icon key back to its Lucide component (client side). */
+export const iconByKey: Record<IconKey, LucideIcon> = {
+  clinical: Stethoscope,
+  encryption: Lock,
+  audit: ShieldCheck,
+  wards: BedDouble,
+  billing: Receipt,
+  pharmacy: Pill,
+  staff: Users,
+  data: Activity,
+};
+
 export interface Capability {
-  icon: LucideIcon;
+  iconKey: IconKey;
   title: string;
   description: string;
   source: string; // where this lives in the real system
@@ -25,55 +48,55 @@ export interface Capability {
 
 export const capabilities: Capability[] = [
   {
-    icon: Stethoscope,
+    iconKey: "clinical",
     title: "Clinical Portal",
     description:
       "Patient roster, vitals, Early Warning Scores and ICD-10 diagnoses for bedside teams.",
     source: "abecca_main",
   },
   {
-    icon: Lock,
+    iconKey: "encryption",
     title: "AES-256-GCM Encryption",
     description:
       "Patient PII (national ID, medical history) is sealed at rest; keys never leave the core.",
     source: "core_engine · security/encryption.rs",
   },
   {
-    icon: ShieldCheck,
+    iconKey: "audit",
     title: "Blockchain Audit Trail",
     description:
       "Every record access and change is hashed into a tamper-evident SHA-256 chain.",
     source: "core_engine · blockchain/",
   },
   {
-    icon: BedDouble,
+    iconKey: "wards",
     title: "Ward & Bed Management",
     description:
       "Live occupancy across wards with capacity alerts for administrators.",
     source: "abecca_admin",
   },
   {
-    icon: Receipt,
+    iconKey: "billing",
     title: "Billing & Tariffs",
     description:
       "Procedure tariffs in IDR drive patient invoices and revenue tracking.",
     source: "core_engine · seeder.rs (tariffs)",
   },
   {
-    icon: Pill,
+    iconKey: "pharmacy",
     title: "Pharmacy Formulary",
     description:
       "Medication stock with automatic reorder-level signalling.",
     source: "core_engine · seeder.rs (formulary)",
   },
   {
-    icon: Users,
+    iconKey: "staff",
     title: "Staff Directory",
     description: "Clinical and operational staff with live shift status.",
     source: "abecca_admin",
   },
   {
-    icon: Activity,
+    iconKey: "data",
     title: "Distributed Data Layer",
     description: "PostgreSQL, Redis and Qdrant power persistence and vector search.",
     source: "docker-compose · infrastructure/",

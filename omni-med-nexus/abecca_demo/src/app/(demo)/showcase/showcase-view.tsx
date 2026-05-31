@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, PlayCircle, Search } from "lucide-react";
-import { capabilities } from "@/lib/data";
+import { iconByKey } from "@/lib/data";
+import { useCapabilities } from "@/lib/content";
 import { Card, CardContent } from "@/components/ui/card";
 
 export function ShowcaseView() {
+  const capabilities = useCapabilities();
   const [query, setQuery] = useState("");
 
   const q = query.trim().toLowerCase();
@@ -59,7 +61,7 @@ export function ShowcaseView() {
       {/* Capability grid */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((c) => {
-          const Icon = c.icon;
+          const Icon = iconByKey[c.iconKey];
           return (
             <Card key={c.title} className="transition-shadow hover:shadow-md">
               <CardContent className="flex flex-col gap-3">
