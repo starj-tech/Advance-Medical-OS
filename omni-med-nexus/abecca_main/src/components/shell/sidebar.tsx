@@ -6,6 +6,7 @@ import {
   Activity,
   LayoutDashboard,
   Pill,
+  Radio,
   Receipt,
   ShieldCheck,
   Users,
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/patients", label: "Patients", icon: Users },
+  { href: "/devices", label: "Devices", icon: Radio },
   { href: "/formulary", label: "Formulary", icon: Pill },
   { href: "/tariffs", label: "Tariffs", icon: Receipt },
   { href: "/audit", label: "Audit Trail", icon: ShieldCheck },
