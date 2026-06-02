@@ -9,7 +9,7 @@ export async function PATCH(
 ) {
   const { id } = await context.params;
   const body = await request.json();
-  const inv = setInvoiceStatus(id, body.status);
+  const inv = await setInvoiceStatus(id, body.status);
   if (!inv) {
     return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
   }

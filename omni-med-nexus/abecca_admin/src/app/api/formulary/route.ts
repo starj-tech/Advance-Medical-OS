@@ -4,5 +4,5 @@ import { getFormulary } from "@/server/db";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json(getFormulary());
+  return NextResponse.json(await getFormulary());
 }

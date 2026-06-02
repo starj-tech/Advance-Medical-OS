@@ -12,7 +12,7 @@ export async function PATCH(
   if (body.op !== "toggleDuty") {
     return NextResponse.json({ error: "Unknown op" }, { status: 400 });
   }
-  const s = toggleStaffDuty(id);
+  const s = await toggleStaffDuty(id);
   if (!s) {
     return NextResponse.json({ error: "Staff not found" }, { status: 404 });
   }

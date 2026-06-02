@@ -4,5 +4,5 @@ import { getStaff } from "@/server/db";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json(getStaff());
+  return NextResponse.json(await getStaff());
 }

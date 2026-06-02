@@ -12,7 +12,7 @@ export async function PATCH(
   if (body.op !== "restock") {
     return NextResponse.json({ error: "Unknown op" }, { status: 400 });
   }
-  const med = restockMedication(Number(id), Number(body.quantity));
+  const med = await restockMedication(Number(id), Number(body.quantity));
   if (!med) {
     return NextResponse.json({ error: "Medication not found" }, { status: 404 });
   }

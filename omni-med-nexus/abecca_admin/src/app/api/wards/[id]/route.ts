@@ -11,9 +11,9 @@ export async function PATCH(
   const body = await request.json();
   const ward =
     body.op === "admit"
-      ? admitToWard(id)
+      ? await admitToWard(id)
       : body.op === "discharge"
-        ? dischargeFromWard(id)
+        ? await dischargeFromWard(id)
         : undefined;
   if (!ward) {
     return NextResponse.json({ error: "Ward not found or bad op" }, { status: 400 });

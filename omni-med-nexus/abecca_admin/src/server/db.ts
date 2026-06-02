@@ -1,14 +1,17 @@
 /**
- * In-memory server datastore for the Abecca Admin BFF.
+ * Server datastore for the Abecca Admin BFF.
  *
- * Real HTTP route handlers read and write this store, so the admin app talks to
- * an actual API. Formulary and tariffs are seeded verbatim from
+ * Two interchangeable backends behind one async API:
+ *   - Supabase (db-supabase.ts) when SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
+ *     are set — durable, shared across serverless instances and with the other
+ *     Abecca apps (same formulary/wards/staff/invoices tables).
+ *   - An in-memory process-global singleton otherwise — the zero-config
+ *     preview/dev default; resets on restart.
+ *
+ * The HTTP contract is identical either way, so route handlers and the client
+ * never change. Formulary and tariffs are seeded verbatim from
  * core_engine/src/database/seeder.rs; wards, staff and invoices are the
  * operational layer admins manage on top of the clinical core.
- *
- * Process-global singleton so state survives across requests (and HMR) within a
- * running server; resets on restart. Swapping these bodies for calls to the
- * Rust core engine keeps the HTTP contract identical.
  */
 
 import type {
@@ -24,6 +27,10 @@ import {
   seedStaff,
   seedWards,
 } from "@/lib/data";
+import { getSupabase } from "./supabase";
+import * as supa from "./db-supabase";
+
+/* ============================ in-memory backend ============================ */
 
 type DB = {
   invoices: Invoice[];
@@ -44,60 +51,100 @@ function build(): DB {
 const g = globalThis as unknown as { __abeccaAdminDb?: DB };
 const db: DB = g.__abeccaAdminDb ?? (g.__abeccaAdminDb = build());
 
-/* ---------------------------------- reads --------------------------------- */
+const memory = {
+  getInvoices: (): Invoice[] => db.invoices,
+  getWards: (): Ward[] => db.wards,
+  getFormulary: (): FormularyItem[] => db.formulary,
+  getStaff: (): Staff[] => db.staff,
 
-export function getInvoices(): Invoice[] {
-  return db.invoices;
-}
-export function getWards(): Ward[] {
-  return db.wards;
-}
-export function getFormulary(): FormularyItem[] {
-  return db.formulary;
-}
-export function getStaff(): Staff[] {
-  return db.staff;
+  setInvoiceStatus: (id: string, status: InvoiceStatus): Invoice | undefined => {
+    const inv = db.invoices.find((i) => i.id === id);
+    if (!inv) return undefined;
+    inv.status = status;
+    return inv;
+  },
+
+  admitToWard: (wardId: string): Ward | undefined => {
+    const w = db.wards.find((x) => x.id === wardId);
+    if (!w) return undefined;
+    w.occupiedBeds = Math.min(w.totalBeds, w.occupiedBeds + 1);
+    return w;
+  },
+
+  dischargeFromWard: (wardId: string): Ward | undefined => {
+    const w = db.wards.find((x) => x.id === wardId);
+    if (!w) return undefined;
+    w.occupiedBeds = Math.max(0, w.occupiedBeds - 1);
+    return w;
+  },
+
+  restockMedication: (medId: number, quantity: number): FormularyItem | undefined => {
+    const med = db.formulary.find((f) => f.id === medId);
+    if (!med) return undefined;
+    med.stockQuantity += quantity;
+    return med;
+  },
+
+  toggleStaffDuty: (id: string): Staff | undefined => {
+    const s = db.staff.find((x) => x.id === id);
+    if (!s) return undefined;
+    s.onDuty = !s.onDuty;
+    return s;
+  },
+};
+
+/* ============================== public API ================================ */
+/* Async everywhere; delegates to Supabase when configured, else in-memory.   */
+
+export async function getInvoices(): Promise<Invoice[]> {
+  const sb = getSupabase();
+  return sb ? supa.getInvoices(sb) : memory.getInvoices();
 }
 
-/* -------------------------------- mutations ------------------------------- */
+export async function getWards(): Promise<Ward[]> {
+  const sb = getSupabase();
+  return sb ? supa.getWards(sb) : memory.getWards();
+}
 
-export function setInvoiceStatus(
+export async function getFormulary(): Promise<FormularyItem[]> {
+  const sb = getSupabase();
+  return sb ? supa.getFormulary(sb) : memory.getFormulary();
+}
+
+export async function getStaff(): Promise<Staff[]> {
+  const sb = getSupabase();
+  return sb ? supa.getStaff(sb) : memory.getStaff();
+}
+
+export async function setInvoiceStatus(
   id: string,
   status: InvoiceStatus,
-): Invoice | undefined {
-  const inv = db.invoices.find((i) => i.id === id);
-  if (!inv) return undefined;
-  inv.status = status;
-  return inv;
+): Promise<Invoice | undefined> {
+  const sb = getSupabase();
+  return sb ? supa.setInvoiceStatus(sb, id, status) : memory.setInvoiceStatus(id, status);
 }
 
-export function admitToWard(wardId: string): Ward | undefined {
-  const w = db.wards.find((x) => x.id === wardId);
-  if (!w) return undefined;
-  w.occupiedBeds = Math.min(w.totalBeds, w.occupiedBeds + 1);
-  return w;
+export async function admitToWard(wardId: string): Promise<Ward | undefined> {
+  const sb = getSupabase();
+  return sb ? supa.admitToWard(sb, wardId) : memory.admitToWard(wardId);
 }
 
-export function dischargeFromWard(wardId: string): Ward | undefined {
-  const w = db.wards.find((x) => x.id === wardId);
-  if (!w) return undefined;
-  w.occupiedBeds = Math.max(0, w.occupiedBeds - 1);
-  return w;
+export async function dischargeFromWard(wardId: string): Promise<Ward | undefined> {
+  const sb = getSupabase();
+  return sb ? supa.dischargeFromWard(sb, wardId) : memory.dischargeFromWard(wardId);
 }
 
-export function restockMedication(
+export async function restockMedication(
   medId: number,
   quantity: number,
-): FormularyItem | undefined {
-  const med = db.formulary.find((f) => f.id === medId);
-  if (!med) return undefined;
-  med.stockQuantity += quantity;
-  return med;
+): Promise<FormularyItem | undefined> {
+  const sb = getSupabase();
+  return sb
+    ? supa.restockMedication(sb, medId, quantity)
+    : memory.restockMedication(medId, quantity);
 }
 
-export function toggleStaffDuty(id: string): Staff | undefined {
-  const s = db.staff.find((x) => x.id === id);
-  if (!s) return undefined;
-  s.onDuty = !s.onDuty;
-  return s;
+export async function toggleStaffDuty(id: string): Promise<Staff | undefined> {
+  const sb = getSupabase();
+  return sb ? supa.toggleStaffDuty(sb, id) : memory.toggleStaffDuty(id);
 }

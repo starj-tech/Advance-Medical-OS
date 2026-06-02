@@ -4,5 +4,5 @@ import { getWards } from "@/server/db";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json(getWards());
+  return NextResponse.json(await getWards());
 }
