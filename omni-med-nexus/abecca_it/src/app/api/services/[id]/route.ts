@@ -11,9 +11,9 @@ export async function PATCH(
   const body = await request.json();
   const service =
     body.op === "cycle"
-      ? cycleServiceStatus(id)
+      ? await cycleServiceStatus(id)
       : body.op === "set"
-        ? setServiceStatus(id, body.status)
+        ? await setServiceStatus(id, body.status)
         : undefined;
   if (!service) {
     return NextResponse.json({ error: "Service not found or bad op" }, { status: 400 });

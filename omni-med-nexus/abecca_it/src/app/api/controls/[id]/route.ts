@@ -12,7 +12,7 @@ export async function PATCH(
   if (body.op !== "toggle") {
     return NextResponse.json({ error: "Unknown op" }, { status: 400 });
   }
-  const control = toggleControl(id);
+  const control = await toggleControl(id);
   if (!control) {
     return NextResponse.json({ error: "Control not found" }, { status: 404 });
   }

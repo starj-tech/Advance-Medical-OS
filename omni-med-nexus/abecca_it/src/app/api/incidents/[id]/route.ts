@@ -9,7 +9,7 @@ export async function PATCH(
 ) {
   const { id } = await context.params;
   const body = await request.json();
-  const inc = setIncidentStatus(id, body.status);
+  const inc = await setIncidentStatus(id, body.status);
   if (!inc) {
     return NextResponse.json({ error: "Incident not found" }, { status: 404 });
   }
