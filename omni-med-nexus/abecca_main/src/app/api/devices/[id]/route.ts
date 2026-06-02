@@ -8,7 +8,7 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  const device = getDevice(decodeURIComponent(id));
+  const device = await getDevice(decodeURIComponent(id));
   if (!device) {
     return NextResponse.json({ error: "Device not found" }, { status: 404 });
   }
@@ -21,7 +21,7 @@ export async function PATCH(
 ) {
   const { id } = await context.params;
   const body = await request.json();
-  const device = setDeviceStatus(decodeURIComponent(id), body.status);
+  const device = await setDeviceStatus(decodeURIComponent(id), body.status);
   if (!device) {
     return NextResponse.json({ error: "Device not found" }, { status: 404 });
   }

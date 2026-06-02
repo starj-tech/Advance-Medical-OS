@@ -15,7 +15,7 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  const patient = getPatient(id);
+  const patient = await getPatient(id);
   if (!patient) {
     return NextResponse.json({ error: "Patient not found" }, { status: 404 });
   }
@@ -32,19 +32,19 @@ export async function PATCH(
   let patient;
   switch (body.op) {
     case "vitals":
-      patient = recordVitals(id, body.vitals);
+      patient = await recordVitals(id, body.vitals);
       break;
     case "diagnosis":
-      patient = addDiagnosis(id, body.code);
+      patient = await addDiagnosis(id, body.code);
       break;
     case "note":
-      patient = addNote(id, body.text);
+      patient = await addNote(id, body.text);
       break;
     case "transfer":
-      patient = transferPatient(id, body.ward, body.bed);
+      patient = await transferPatient(id, body.ward, body.bed);
       break;
     case "discharge":
-      patient = dischargePatient(id);
+      patient = await dischargePatient(id);
       break;
     default:
       return NextResponse.json({ error: "Unknown op" }, { status: 400 });

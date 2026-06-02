@@ -4,5 +4,5 @@ import { getIcd10 } from "@/server/db";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json(getIcd10());
+  return NextResponse.json(await getIcd10());
 }

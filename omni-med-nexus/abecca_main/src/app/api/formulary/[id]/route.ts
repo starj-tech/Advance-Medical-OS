@@ -12,7 +12,7 @@ export async function PATCH(
   const body = await request.json();
 
   if (body.op === "restock") {
-    const med = restockMedication(medId, Number(body.quantity));
+    const med = await restockMedication(medId, Number(body.quantity));
     if (!med) {
       return NextResponse.json({ error: "Medication not found" }, { status: 404 });
     }
@@ -20,7 +20,7 @@ export async function PATCH(
   }
 
   if (body.op === "dispense") {
-    const { med } = dispenseToPatient(
+    const { med } = await dispenseToPatient(
       String(body.patientId),
       medId,
       Number(body.quantity),

@@ -4,5 +4,5 @@ import { getTariffs } from "@/server/db";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json(getTariffs());
+  return NextResponse.json(await getTariffs());
 }

@@ -9,7 +9,7 @@ export async function GET(
 ) {
   const { id } = await context.params;
   const limit = Number(new URL(request.url).searchParams.get("limit") ?? 100);
-  return NextResponse.json(recentReadings(decodeURIComponent(id), limit));
+  return NextResponse.json(await recentReadings(decodeURIComponent(id), limit));
 }
 
 /**
@@ -23,7 +23,7 @@ export async function POST(
   const { id } = await context.params;
   const deviceId = decodeURIComponent(id);
   const body = await request.json();
-  const reading = ingestReading({
+  const reading = await ingestReading({
     deviceId,
     kind: body.kind,
     ts: body.ts ?? new Date().toISOString(),

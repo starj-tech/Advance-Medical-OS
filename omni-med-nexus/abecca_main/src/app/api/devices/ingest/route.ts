@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   for (const r of readings) {
     if (!r?.deviceId) continue;
     // Auto-register unknown devices the gateway reports.
-    upsertDevice({
+    await upsertDevice({
       id: r.deviceId,
       kind: r.kind,
       label: r.deviceId.split(":").slice(1).join(":") || r.deviceId,
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       status: r.status ?? "streaming",
       lastSeen: r.ts ?? new Date().toISOString(),
     });
-    ingestReading({
+    await ingestReading({
       deviceId: r.deviceId,
       kind: r.kind,
       ts: r.ts ?? new Date().toISOString(),
