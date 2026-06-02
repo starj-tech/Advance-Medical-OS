@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, ListTree, ServerCog, ShieldAlert, Terminal } from "lucide-react";
+import { Activity, ListTree, Radio, ServerCog, ShieldAlert, Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/overview", label: "System Overview", icon: Activity },
   { href: "/services", label: "Services", icon: ServerCog },
+  { href: "/fleet", label: "Device Fleet", icon: Radio },
   { href: "/incidents", label: "Incidents", icon: ShieldAlert },
   { href: "/security", label: "Security Posture", icon: ListTree },
 ];

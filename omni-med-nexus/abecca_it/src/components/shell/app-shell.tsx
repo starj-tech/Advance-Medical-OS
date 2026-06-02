@@ -9,6 +9,7 @@ import { Topbar } from "./topbar";
 const titles: Record<string, string> = {
   "/overview": "System Overview",
   "/services": "Services",
+  "/fleet": "Device Fleet",
   "/incidents": "Incidents",
   "/security": "Security Posture",
 };
