@@ -39,6 +39,7 @@ import { VitalsTrend } from "@/components/ui/vitals-trend";
 import { RecordVitalsDialog } from "@/components/clinical/record-vitals-dialog";
 import { DispenseDialog } from "@/components/clinical/dispense-dialog";
 import { TransferDialog } from "@/components/clinical/transfer-dialog";
+import { EncountersPanel } from "@/components/clinical/encounters-panel";
 
 function vitalCards(p: Patient) {
   const { vitals } = p;
@@ -199,6 +200,9 @@ export function PatientDetail({ id }: { id: string }) {
           </CardContent>
         </Card>
       )}
+
+      {/* Structured encounters + ICD-10 diagnoses (tenant-scoped, via guarded API) */}
+      <EncountersPanel patientId={patient.id} />
 
       {/* Vitals */}
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
