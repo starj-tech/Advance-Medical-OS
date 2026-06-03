@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ROLE_TIERS, subRolesByTier } from "@/lib/rbac";
@@ -46,10 +47,16 @@ function SubRoleSelect({
 
 type Result = { companyCode: string; adminTempPassword: string; employeeCount: number };
 
-export default function RegisterPage() {
+type PlanValue = (typeof PLANS)[number]["value"];
+function isPlanValue(v: string | null): v is PlanValue {
+  return v === "starter" || v === "professional" || v === "enterprise";
+}
+
+function RegisterForm() {
+  const planParam = useSearchParams().get("plan");
   const [legalName, setLegalName] = useState("");
   const [hospitalClass, setHospitalClass] = useState("");
-  const [plan, setPlan] = useState<(typeof PLANS)[number]["value"]>("starter");
+  const [plan, setPlan] = useState<PlanValue>(isPlanValue(planParam) ? planParam : "starter");
   const [picEmail, setPicEmail] = useState("");
 
   const [adminName, setAdminName] = useState("");
@@ -73,31 +80,39 @@ export default function RegisterPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          legalName: legalName.trim(),
-          picEmail: picEmail.trim(),
-          hospitalClass: hospitalClass.trim() || undefined,
           plan,
-          admin: {
-            fullName: adminName.trim(),
-            email: adminEmail.trim(),
-            subRole: adminSubRole,
+          registration: {
+            legalName: legalName.trim(),
+            picEmail: picEmail.trim(),
+            hospitalClass: hospitalClass.trim() || undefined,
+            admin: {
+              fullName: adminName.trim(),
+              email: adminEmail.trim(),
+              subRole: adminSubRole,
+            },
+            employees: employees
+              .filter((emp) => emp.fullName.trim() && emp.email.trim() && emp.subRole)
+              .map((emp) => ({
+                fullName: emp.fullName.trim(),
+                email: emp.email.trim(),
+                subRole: emp.subRole,
+              })),
           },
-          employees: employees
-            .filter((emp) => emp.fullName.trim() && emp.email.trim() && emp.subRole)
-            .map((emp) => ({
-              fullName: emp.fullName.trim(),
-              email: emp.email.trim(),
-              subRole: emp.subRole,
-            })),
         }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(j.error ?? "Pendaftaran gagal. Periksa kembali isian Anda.");
+        return;
+      }
+      // Live Stripe mode returns a Checkout URL to redirect to; mock mode
+      // provisions immediately and returns the Company ID.
+      if (j.mode === "stripe" && j.url) {
+        window.location.href = j.url;
         return;
       }
       setResult({
@@ -243,5 +258,13 @@ export default function RegisterPage() {
         </Button>
       </div>
     </form>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
   );
 }

@@ -8,7 +8,13 @@ import { SESSION_COOKIE } from "@/lib/auth-cookie";
  * token); authoritative validation happens server-side in the data layer via
  * getSessionUser(). Data APIs under /api are left untouched for now.
  */
-const PUBLIC_PAGES = new Set(["/", "/login", "/register"]);
+const PUBLIC_PAGES = new Set([
+  "/",
+  "/login",
+  "/register",
+  "/pricing",
+  "/billing/return",
+]);
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
