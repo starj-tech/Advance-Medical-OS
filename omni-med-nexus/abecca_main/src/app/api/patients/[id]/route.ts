@@ -7,6 +7,7 @@ import {
   recordVitals,
   transferPatient,
 } from "@/server/db";
+import { requirePermission } from "@/server/auth/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const guard = await requirePermission("patient:read");
+  if (guard.error) return guard.error;
   const { id } = await context.params;
   const patient = await getPatient(id);
   if (!patient) {
@@ -26,6 +29,8 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const guard = await requirePermission("patient:write");
+  if (guard.error) return guard.error;
   const { id } = await context.params;
   const body = await request.json();
 

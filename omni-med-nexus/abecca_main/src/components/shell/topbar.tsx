@@ -3,6 +3,7 @@
 import { Bell, Menu, Search } from "lucide-react";
 import { initials } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { useSession } from "@/lib/use-session";
 
 export function Topbar({
   title,
@@ -11,6 +12,9 @@ export function Topbar({
   title: string;
   onMenuClick?: () => void;
 }) {
+  const { session } = useSession();
+  const displayName = session?.user.fullName ?? "Memuat…";
+  const displaySub = session?.company.companyCode ?? "";
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
       <button
@@ -48,11 +52,11 @@ export function Topbar({
 
         <div className="flex items-center gap-2.5 pl-1">
           <span className="grid size-9 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-            {initials("Dr Sarah Halim")}
+            {initials(displayName)}
           </span>
           <div className="hidden flex-col leading-tight md:flex">
-            <span className="text-sm font-medium">Dr Sarah Halim</span>
-            <span className="text-xs text-muted-foreground">DOC-456</span>
+            <span className="text-sm font-medium">{displayName}</span>
+            <span className="text-xs font-mono text-muted-foreground">{displaySub}</span>
           </div>
         </div>
       </div>

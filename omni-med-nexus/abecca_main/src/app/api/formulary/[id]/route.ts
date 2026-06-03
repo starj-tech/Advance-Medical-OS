@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { dispenseToPatient, restockMedication } from "@/server/db";
+import { requirePermission } from "@/server/auth/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +8,8 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const guard = await requirePermission("formulary:dispense");
+  if (guard.error) return guard.error;
   const { id } = await context.params;
   const medId = Number(id);
   const body = await request.json();
