@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { registerCompany, RegisterError } from "@/server/auth/store";
+import { RegisterError } from "@/server/auth/store";
+import { provisionAndNotify } from "@/server/billing/provision";
 import { planById } from "@/server/billing/plans";
 import { createCheckoutSession, priceIdFor, stripeConfigured } from "@/server/billing/stripe";
 import { savePending } from "@/server/billing/pending";
@@ -30,16 +31,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Data pendaftaran tidak lengkap." }, { status: 400 });
   }
   reg.plan = plan.id;
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
 
   if (!stripeConfigured()) {
     try {
-      const result = await registerCompany(reg);
+      const result = await provisionAndNotify(reg, origin);
       return NextResponse.json(
         {
           mode: "mock",
           companyCode: result.company.companyCode,
           adminTempPassword: result.adminTempPassword,
           employeeCount: result.employeeCount,
+          // Mock/preview only (no email provider): surface invite links so the
+          // admin can share them. In live mode these are emailed, not returned.
+          invites: result.invites.map((i) => ({
+            email: i.email,
+            setPasswordUrl: `${origin}/set-password?token=${i.token}`,
+          })),
         },
         { status: 201 },
       );
@@ -60,7 +68,6 @@ export async function POST(request: Request) {
   }
 
   const token = await savePending(plan.id, reg);
-  const origin = new URL(request.url).origin;
   const { url } = await createCheckoutSession({
     plan,
     priceId,

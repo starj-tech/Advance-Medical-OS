@@ -14,6 +14,7 @@ const PUBLIC_PAGES = new Set([
   "/register",
   "/pricing",
   "/billing/return",
+  "/set-password",
 ]);
 
 export function middleware(req: NextRequest) {

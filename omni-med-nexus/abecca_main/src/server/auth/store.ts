@@ -8,7 +8,8 @@
  *
  * Login model (locked): Company ID (company_code) + employee email + password.
  * The PIC/registrant is the company admin. Sessions store only the sha256 of the
- * cookie token. Passwords are scrypt-hashed (server/auth/password.ts).
+ * cookie token. Passwords are scrypt-hashed (server/auth/password.ts). Invited
+ * employees set their own password via a tokenised link (set-password flow).
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabase } from "../supabase";
@@ -30,6 +31,8 @@ export interface Company {
   picEmail: string;
   plan: Plan;
   status: string;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
 }
 
 export interface AuthUser {
@@ -51,20 +54,33 @@ export interface RegisterInput {
   address?: string;
   phone?: string;
   plan?: Plan;
+  /** Stripe identifiers, set by the billing webhook on live provisioning. */
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
   /** The PIC / company admin (also a user). */
   admin: { fullName: string; email: string; subRole: string };
   /** Additional employees provisioned at registration. */
   employees?: { fullName: string; email: string; subRole: string }[];
 }
 
+export interface InviteHandle {
+  email: string;
+  fullName: string;
+  /** Raw invite token (only returned at creation; stored hashed). */
+  token: string;
+}
+
 export interface RegisterResult {
   company: Company;
-  /** One-time admin password (emailed in production; returned here for now). */
+  /** One-time admin password (emailed to the admin). */
   adminTempPassword: string;
   employeeCount: number;
+  /** One invite per provisioned employee, for emailing set-password links. */
+  invites: InviteHandle[];
 }
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 class RegisterError extends Error {}
 export { RegisterError };
@@ -90,6 +106,8 @@ type Row = {
   password_hash: string | null;
   is_company_admin: boolean;
   status: string;
+  invite_token_hash: string | null;
+  invite_expires_at: string | null;
 };
 
 type Mem = {
@@ -122,6 +140,10 @@ function rowToUser(r: Row): AuthUser {
   };
 }
 
+function notExpired(iso: string | null): boolean {
+  return !!iso && new Date(iso).getTime() >= Date.now();
+}
+
 async function uniqueCode(exists: (c: string) => Promise<boolean>, seed: string) {
   for (let i = 0; i < 20; i++) {
     const code = generateCompanyCode(seed);
@@ -138,10 +160,7 @@ const memory = {
       tier: tierForSubRole(e.subRole),
     }));
 
-    const code = await uniqueCode(
-      async (c) => mem.codeToId.has(c),
-      input.legalName,
-    );
+    const code = await uniqueCode(async (c) => mem.codeToId.has(c), input.legalName);
     const companyId = crypto.randomUUID();
     const company: Company = {
       id: companyId,
@@ -150,6 +169,8 @@ const memory = {
       picEmail: input.picEmail,
       plan: input.plan ?? "starter",
       status: "active",
+      stripeCustomerId: input.stripeCustomerId ?? null,
+      stripeSubscriptionId: input.stripeSubscriptionId ?? null,
     };
     mem.companies.set(companyId, company);
     mem.codeToId.set(code, companyId);
@@ -165,8 +186,14 @@ const memory = {
       password_hash: hashPassword(tempPassword),
       is_company_admin: true,
       status: "active",
+      invite_token_hash: null,
+      invite_expires_at: null,
     });
+
+    const invites: InviteHandle[] = [];
+    const inviteExpiry = new Date(Date.now() + INVITE_TTL_MS).toISOString();
     for (const e of employees) {
+      const token = generateSessionToken();
       mem.users.push({
         id: crypto.randomUUID(),
         company_id: companyId,
@@ -177,9 +204,12 @@ const memory = {
         password_hash: null,
         is_company_admin: false,
         status: "invited",
+        invite_token_hash: hashToken(token),
+        invite_expires_at: inviteExpiry,
       });
+      invites.push({ email: e.email.toLowerCase(), fullName: e.fullName, token });
     }
-    return { company, adminTempPassword: tempPassword, employeeCount: employees.length };
+    return { company, adminTempPassword: tempPassword, employeeCount: employees.length, invites };
   },
 
   async authenticate(code: string, email: string, password: string) {
@@ -190,6 +220,17 @@ const memory = {
     );
     if (!row || !row.password_hash || row.status !== "active") return undefined;
     if (!verifyPassword(password, row.password_hash)) return undefined;
+    return rowToUser(row);
+  },
+
+  async setEmployeePassword(token: string, password: string) {
+    const h = hashToken(token);
+    const row = mem.users.find((u) => u.invite_token_hash === h);
+    if (!row || !notExpired(row.invite_expires_at)) return undefined;
+    row.password_hash = hashPassword(password);
+    row.status = "active";
+    row.invite_token_hash = null;
+    row.invite_expires_at = null;
     return rowToUser(row);
   },
 
@@ -231,6 +272,8 @@ function sbCompany(r: {
   pic_email: string;
   plan: Plan;
   status: string;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
 }): Company {
   return {
     id: r.id,
@@ -239,6 +282,8 @@ function sbCompany(r: {
     picEmail: r.pic_email,
     plan: r.plan,
     status: r.status,
+    stripeCustomerId: r.stripe_customer_id ?? null,
+    stripeSubscriptionId: r.stripe_subscription_id ?? null,
   };
 }
 
@@ -271,6 +316,8 @@ const supa = {
         pic_email: input.picEmail,
         plan: input.plan ?? "starter",
         status: "active",
+        stripe_customer_id: input.stripeCustomerId ?? null,
+        stripe_subscription_id: input.stripeSubscriptionId ?? null,
       })
       .select("*")
       .single();
@@ -278,7 +325,10 @@ const supa = {
     const company = sbCompany(companyRow);
 
     const tempPassword = generateTempPassword();
-    const rows = [
+    const inviteExpiry = new Date(Date.now() + INVITE_TTL_MS).toISOString();
+    const invites: InviteHandle[] = [];
+
+    const rows: Record<string, unknown>[] = [
       {
         company_id: company.id,
         full_name: input.admin.fullName,
@@ -290,7 +340,10 @@ const supa = {
         must_set_password: false,
         status: "active",
       },
-      ...employees.map((e) => ({
+    ];
+    for (const e of employees) {
+      const token = generateSessionToken();
+      rows.push({
         company_id: company.id,
         full_name: e.fullName,
         email: e.email.toLowerCase(),
@@ -300,11 +353,15 @@ const supa = {
         is_company_admin: false,
         must_set_password: true,
         status: "invited",
-      })),
-    ];
+        invite_token_hash: hashToken(token),
+        invite_expires_at: inviteExpiry,
+      });
+      invites.push({ email: e.email.toLowerCase(), fullName: e.fullName, token });
+    }
+
     const { error: uErr } = await sb.from("users").insert(rows);
     if (uErr) throw new RegisterError(uErr.message);
-    return { company, adminTempPassword: tempPassword, employeeCount: employees.length };
+    return { company, adminTempPassword: tempPassword, employeeCount: employees.length, invites };
   },
 
   async authenticate(sb: SupabaseClient, code: string, email: string, password: string) {
@@ -322,6 +379,27 @@ const supa = {
       .maybeSingle();
     if (!row || !row.password_hash || row.status !== "active") return undefined;
     if (!verifyPassword(password, row.password_hash)) return undefined;
+    return rowToUser(row as Row);
+  },
+
+  async setEmployeePassword(sb: SupabaseClient, token: string, password: string) {
+    const { data: row } = await sb
+      .from("users")
+      .select("*")
+      .eq("invite_token_hash", hashToken(token))
+      .maybeSingle();
+    if (!row || !notExpired(row.invite_expires_at)) return undefined;
+    const { error } = await sb
+      .from("users")
+      .update({
+        password_hash: hashPassword(password),
+        status: "active",
+        must_set_password: false,
+        invite_token_hash: null,
+        invite_expires_at: null,
+      })
+      .eq("id", row.id);
+    if (error) return undefined;
     return rowToUser(row as Row);
   },
 
@@ -379,6 +457,14 @@ export async function authenticate(
   return sb
     ? supa.authenticate(sb, companyCode, email, password)
     : memory.authenticate(companyCode, email, password);
+}
+
+export async function setEmployeePassword(
+  token: string,
+  password: string,
+): Promise<AuthUser | undefined> {
+  const sb = getSupabase();
+  return sb ? supa.setEmployeePassword(sb, token, password) : memory.setEmployeePassword(token, password);
 }
 
 export async function createSession(
