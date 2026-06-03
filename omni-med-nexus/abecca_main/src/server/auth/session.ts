@@ -3,8 +3,9 @@
  * stores only its hash (see server/auth/store.ts).
  */
 import { cookies } from "next/headers";
+import { SESSION_COOKIE } from "@/lib/auth-cookie";
 
-export const SESSION_COOKIE = "abecca_session";
+export { SESSION_COOKIE };
 
 export async function setSessionCookie(token: string, expiresAt: Date): Promise<void> {
   const jar = await cookies();
