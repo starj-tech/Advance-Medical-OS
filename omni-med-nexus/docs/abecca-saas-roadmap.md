@@ -1,8 +1,9 @@
 # Abecca SaaS — Multi-Tenant Onboarding, Billing & RBAC (Design / Roadmap)
 
-> Status: **DRAFT for alignment.** Sections marked _(to confirm)_ need a product
-> decision before implementation. The RBAC taxonomy and architecture are stable
-> enough to build against.
+> Status: **Decisions locked — building Phase 1.** The key product decisions are
+> resolved in §11; earlier _(to confirm)_ notes are superseded by it. The full
+> sub-role catalogue now lives as typed code in
+> `abecca_main/src/lib/rbac.ts` (4 tiers, incl. the added "Staff" tier).
 
 ## 1. Vision & scope
 
@@ -252,3 +253,33 @@ call — see §10.
 4. **Password issuance** — system auto-generates vs. registrant self-sets (or
    both: auto for admin, invite link for employees).
 5. **Email provider** — Resend (recommended) vs. SMTP vs. Supabase.
+
+## 11. Decisions locked (supersedes §10 and the _(to confirm)_ notes)
+
+1. **Credential model → Company ID + per-employee password.** The Company ID
+   identifies the tenant; each employee authenticates with their own password.
+   The PIC is the company admin. (Stored as `users.password_hash`, argon2/bcrypt;
+   httpOnly session cookie.)
+2. **RBAC → four tiers.** Tier 3 (Doctor/Clinical) is broadened to the full
+   clinical workforce (doctors + nurses, midwives, pharmacists, lab/imaging
+   technologists, therapists, medical recorders) **and** a new **Tier 4 "Staff"**
+   is added for the non-clinical/administrative workforce. Catalogue is in
+   `abecca_main/src/lib/rbac.ts` (`RoleTier` = executive | manager | doctor |
+   staff).
+3. **Bundles → by module/app access**, with an important scoping change:
+   **`abecca_admin` is NOT a customer app.** It is the **internal Abecca control
+   plane** (operated by us/developers) for managing tenants, subscriptions and
+   provisioning. Therefore:
+   - Hospital-facing operational features currently in `admin` (wards/beds,
+     staff, billing/invoices, formulary management) will be **re-homed into the
+     customer app (`main`)**, gated by Executive/Manager roles, in a later phase.
+   - Customer bundles unlock modules within `main` (+ `it` ops console at the top
+     tier); they never include the `admin` control plane.
+   - Draft tiers (prices TBD): **Starter** = `main` clinical core · **Professional**
+     = `main` + operational modules (billing, wards, staff, formulary, audit) ·
+     **Enterprise** = + `it` ops console, device integration, SSO, priority support.
+4. **Email → Resend.** **Password issuance →** auto-generated for the company
+   admin/PIC; employees receive an invite link to set their own password.
+5. **Start → Phase 1 (tenancy + auth).** In progress: RBAC constants (done),
+   then companies/users/sessions schema + register-company + login (Company ID +
+   password) + sessions + tenant scoping.
