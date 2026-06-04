@@ -9,10 +9,13 @@ import {
   Lock,
   ShieldAlert,
   Stethoscope,
+  TrendingUp,
   Wallet,
 } from "lucide-react";
 import type { AnalyticsOverview } from "@/server/analytics/overview";
+import type { RiskRegister } from "@/server/analytics/risk";
 import type { EncounterType } from "@/server/clinical/encounters";
+import type { RiskBand } from "@/lib/risk";
 import type { Grading, IncidentType } from "@/server/safety/ikp";
 import { formatIDR, formatNumber } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +43,13 @@ const GRADING_BAR: Record<Grading, string> = {
   hijau: "bg-emerald-500",
   kuning: "bg-amber-500",
   merah: "bg-rose-500",
+};
+
+const BAND_LABEL: Record<RiskBand, string> = { high: "Tinggi", medium: "Sedang", low: "Rendah" };
+const BAND_VARIANT: Record<RiskBand, "danger" | "warning" | "success"> = {
+  high: "danger",
+  medium: "warning",
+  low: "success",
 };
 
 /** BOR bands follow Depkes RI: 60–85% ideal, below under-used, above crowded. */
@@ -80,12 +90,16 @@ export function AnalyticsView() {
 
 function AnalyticsDashboard() {
   const [data, setData] = useState<AnalyticsOverview | null>(null);
+  const [risk, setRisk] = useState<RiskRegister | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/analytics/overview");
-    const next: AnalyticsOverview | null = res.ok ? await res.json() : null;
-    setData(next);
+    const [ovRes, riskRes] = await Promise.all([
+      fetch("/api/analytics/overview"),
+      fetch("/api/analytics/risk"),
+    ]);
+    setData(ovRes.ok ? await ovRes.json() : null);
+    setRisk(riskRes.ok ? await riskRes.json() : null);
     setLoading(false);
   }, []);
 
@@ -137,6 +151,58 @@ function AnalyticsDashboard() {
           hint={`${safety.total} total insiden`}
         />
       </div>
+
+      {/* Predictive risk worklist */}
+      {risk && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="size-4 text-primary" /> Stratifikasi Risiko Pasien
+              <span className="text-xs font-normal text-muted-foreground">(prediktif · ilustratif)</span>
+            </CardTitle>
+            <div className="flex gap-1.5">
+              <Badge variant="danger">Tinggi {risk.counts.high}</Badge>
+              <Badge variant="warning">Sedang {risk.counts.medium}</Badge>
+              <Badge variant="success">Rendah {risk.counts.low}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {risk.patients.length === 0 ? (
+              <p className="px-5 py-6 text-center text-sm text-muted-foreground">
+                Belum ada kunjungan aktif untuk dinilai.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {risk.patients.slice(0, 8).map((p) => (
+                  <li key={p.encounterId} className="px-5 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <Badge variant={BAND_VARIANT[p.band]}>{BAND_LABEL[p.band]}</Badge>
+                      <span className="text-sm font-medium">{p.patientId}</span>
+                      <span className="text-xs text-muted-foreground">{ENC_LABEL[p.encounterType]}</span>
+                      <span className="ml-auto text-sm font-semibold tabular-nums">{p.score}</span>
+                    </div>
+                    {p.primaryDiagnosis && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">Dx utama: {p.primaryDiagnosis}</p>
+                    )}
+                    {p.factors.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {p.factors.map((f) => (
+                          <span
+                            key={f.label}
+                            className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
+                          >
+                            {f.label} +{f.points}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Encounter mix */}
