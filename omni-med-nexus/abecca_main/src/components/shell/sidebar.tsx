@@ -9,6 +9,7 @@ import {
   Pill,
   Radio,
   Receipt,
+  ShieldAlert,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -21,6 +22,7 @@ const nav = [
   { href: "/devices", label: "Devices", icon: Radio },
   { href: "/formulary", label: "Formulary", icon: Pill },
   { href: "/tariffs", label: "Tariffs", icon: Receipt },
+  { href: "/safety", label: "Keselamatan", icon: ShieldAlert },
   { href: "/audit", label: "Audit Trail", icon: ShieldCheck },
 ];
 
