@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { FileText, Plus, Receipt, Wallet } from "lucide-react";
+import { CreditCard, FileText, Plus, Receipt, Wallet } from "lucide-react";
 import type { Tariff } from "@/lib/types";
 import type { BillSummary, PaymentMethod } from "@/server/billing/charges";
 import type { InacbgClaim } from "@/server/billing/inacbg";
+import type { SepRecord } from "@/server/bpjs/sep";
 import type { CareClass } from "@/lib/inacbg";
 import { CARE_CLASSES, CARE_CLASS_LABEL } from "@/lib/inacbg";
 import { formatIDR } from "@/lib/utils";
@@ -46,6 +47,9 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
   const [payAmount, setPayAmount] = useState("");
   const [inacbg, setInacbg] = useState<InacbgData | null>(null);
   const [careClass, setCareClass] = useState<CareClass>("3");
+  const [sep, setSep] = useState<SepRecord | null>(null);
+  const [noKartu, setNoKartu] = useState("");
+  const [issuing, setIssuing] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/encounters/${encounterId}/billing`);
@@ -55,6 +59,14 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
   const loadInacbg = useCallback(async () => {
     const res = await fetch(`/api/encounters/${encounterId}/inacbg`);
     if (res.ok) setInacbg(await res.json());
+  }, [encounterId]);
+
+  const loadSep = useCallback(async () => {
+    const res = await fetch(`/api/encounters/${encounterId}/bpjs-sep`);
+    if (res.ok) {
+      const data: { sep: SepRecord | null } = await res.json();
+      setSep(data.sep);
+    }
   }, [encounterId]);
 
   const loadTariffs = useCallback(async () => {
@@ -71,7 +83,22 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
     void load();
     void loadTariffs();
     void loadInacbg();
-  }, [load, loadTariffs, loadInacbg]);
+    void loadSep();
+  }, [load, loadTariffs, loadInacbg, loadSep]);
+
+  const issueSep = async () => {
+    setIssuing(true);
+    const res = await fetch(`/api/encounters/${encounterId}/bpjs-sep`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ noKartu }),
+    });
+    if (res.ok) {
+      setNoKartu("");
+      await loadSep();
+    }
+    setIssuing(false);
+  };
 
   const saveClaim = async () => {
     const res = await fetch(`/api/encounters/${encounterId}/inacbg`, {
@@ -317,6 +344,43 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
               </div>
             );
           })()}
+
+          <div className="space-y-1.5 border-t border-border pt-2">
+            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <CreditCard className="size-3.5" /> BPJS — SEP
+            </span>
+            {sep ? (
+              <div className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono font-semibold">{sep.sepNumber}</span>
+                  {sep.isMock && <Badge variant="muted">mock</Badge>}
+                  <Badge variant={sep.status === "issued" ? "success" : "danger"}>{sep.status}</Badge>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {sep.pesertaNama} · {sep.pesertaKelas} · {sep.pesertaStatus} · No. {sep.noKartu}
+                </p>
+                {sep.diagnosis && (
+                  <p className="text-xs text-muted-foreground">Dx: {sep.diagnosis}</p>
+                )}
+              </div>
+            ) : (
+              <Can permission="billing:manage">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={noKartu}
+                    onChange={(e) => setNoKartu(e.target.value)}
+                    placeholder="No. Kartu BPJS (13 digit)"
+                    inputMode="numeric"
+                    className={`${inputCls} min-w-0 flex-1`}
+                    aria-label="Nomor kartu BPJS"
+                  />
+                  <Button size="sm" onClick={issueSep} disabled={issuing || !/^\d{10,16}$/.test(noKartu.trim())}>
+                    Terbitkan SEP
+                  </Button>
+                </div>
+              </Can>
+            )}
+          </div>
         </>
       )}
     </div>
