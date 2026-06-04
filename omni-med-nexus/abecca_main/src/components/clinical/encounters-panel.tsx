@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, Plus, Stethoscope } from "lucide-react";
 import type { Encounter, Diagnosis, EncounterType } from "@/server/clinical/encounters";
+import type { ClinicalNote } from "@/server/clinical/notes";
 import { icd10 } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,10 @@ import { Can } from "@/components/auth/can";
 
 const inputCls =
   "h-9 rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30";
+const textareaCls =
+  "min-h-[60px] rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30";
+
+const EMPTY_DRAFT = { subjective: "", objective: "", assessment: "", plan: "" };
 
 const TYPE_LABEL: Record<EncounterType, string> = {
   outpatient: "Rawat Jalan",
@@ -29,6 +34,8 @@ export function EncountersPanel({ patientId }: { patientId: string }) {
   const [diagnoses, setDiagnoses] = useState<Record<string, Diagnosis[]>>({});
   const [newType, setNewType] = useState<EncounterType>("outpatient");
   const [dxCode, setDxCode] = useState(ICD_CODES[0]);
+  const [notes, setNotes] = useState<Record<string, ClinicalNote[]>>({});
+  const [draft, setDraft] = useState(EMPTY_DRAFT);
 
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/encounters?patientId=${encodeURIComponent(patientId)}`);
@@ -50,10 +57,20 @@ export function EncountersPanel({ patientId }: { patientId: string }) {
     setDiagnoses((m) => ({ ...m, [encounterId]: data }));
   };
 
+  const loadNotes = async (encounterId: string) => {
+    const res = await fetch(`/api/encounters/${encounterId}/notes`);
+    if (!res.ok) return;
+    const data: ClinicalNote[] = await res.json();
+    setNotes((m) => ({ ...m, [encounterId]: data }));
+  };
+
   const toggle = (id: string) => {
     const next = open === id ? null : id;
     setOpen(next);
-    if (next && !diagnoses[next]) void loadDiagnoses(next);
+    if (next) {
+      if (!diagnoses[next]) void loadDiagnoses(next);
+      if (!notes[next]) void loadNotes(next);
+    }
   };
 
   const createEncounter = async () => {
@@ -72,6 +89,18 @@ export function EncountersPanel({ patientId }: { patientId: string }) {
       body: JSON.stringify({ code: dxCode, description: icd10[dxCode], rank: "secondary" }),
     });
     if (res.ok) await loadDiagnoses(encounterId);
+  };
+
+  const addNote = async (encounterId: string) => {
+    const res = await fetch(`/api/encounters/${encounterId}/notes`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...draft, noteType: "cppt" }),
+    });
+    if (res.ok) {
+      setDraft(EMPTY_DRAFT);
+      await loadNotes(encounterId);
+    }
   };
 
   const finish = async (encounterId: string) => {
@@ -120,6 +149,7 @@ export function EncountersPanel({ patientId }: { patientId: string }) {
             {encounters.map((e) => {
               const isOpen = open === e.id;
               const dx = diagnoses[e.id] ?? [];
+              const nt = notes[e.id] ?? [];
               return (
                 <li key={e.id}>
                   <button
@@ -188,6 +218,97 @@ export function EncountersPanel({ patientId }: { patientId: string }) {
                           </div>
                         </Can>
                       )}
+
+                      <div className="space-y-2 border-t border-border pt-3">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          CPPT — Catatan Terintegrasi
+                        </span>
+                        {nt.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">Belum ada catatan.</p>
+                        ) : (
+                          <ul className="flex flex-col gap-2">
+                            {nt.map((n) => (
+                              <li
+                                key={n.id}
+                                className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                              >
+                                <div className="mb-1 flex items-center gap-2">
+                                  <Badge variant="muted">{n.authorRole ?? "PPA"}</Badge>
+                                  <span className="ml-auto text-xs text-muted-foreground">
+                                    {formatDate(n.createdAt)}
+                                  </span>
+                                </div>
+                                {n.subjective && (
+                                  <p><span className="font-semibold">S:</span> {n.subjective}</p>
+                                )}
+                                {n.objective && (
+                                  <p><span className="font-semibold">O:</span> {n.objective}</p>
+                                )}
+                                {n.assessment && (
+                                  <p><span className="font-semibold">A:</span> {n.assessment}</p>
+                                )}
+                                {n.plan && (
+                                  <p><span className="font-semibold">P:</span> {n.plan}</p>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {e.status === "in_progress" && (
+                          <Can permission="note:write">
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <textarea
+                                value={draft.subjective}
+                                onChange={(ev) =>
+                                  setDraft((d) => ({ ...d, subjective: ev.target.value }))
+                                }
+                                placeholder="S — Subjektif"
+                                className={textareaCls}
+                                aria-label="Subjektif"
+                              />
+                              <textarea
+                                value={draft.objective}
+                                onChange={(ev) =>
+                                  setDraft((d) => ({ ...d, objective: ev.target.value }))
+                                }
+                                placeholder="O — Objektif"
+                                className={textareaCls}
+                                aria-label="Objektif"
+                              />
+                              <textarea
+                                value={draft.assessment}
+                                onChange={(ev) =>
+                                  setDraft((d) => ({ ...d, assessment: ev.target.value }))
+                                }
+                                placeholder="A — Asesmen"
+                                className={textareaCls}
+                                aria-label="Asesmen"
+                              />
+                              <textarea
+                                value={draft.plan}
+                                onChange={(ev) =>
+                                  setDraft((d) => ({ ...d, plan: ev.target.value }))
+                                }
+                                placeholder="P — Plan"
+                                className={textareaCls}
+                                aria-label="Plan"
+                              />
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => addNote(e.id)}
+                              disabled={
+                                !draft.subjective.trim() &&
+                                !draft.objective.trim() &&
+                                !draft.assessment.trim() &&
+                                !draft.plan.trim()
+                              }
+                            >
+                              <Plus className="size-4" /> Tambah Catatan
+                            </Button>
+                          </Can>
+                        )}
+                      </div>
                     </div>
                   )}
                 </li>
