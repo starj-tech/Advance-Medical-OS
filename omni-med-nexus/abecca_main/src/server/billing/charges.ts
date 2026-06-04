@@ -154,3 +154,38 @@ export async function billSummary(companyId: string, encounterId: string): Promi
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
   return { charges, payments, totalCharges, totalPaid, balance: totalCharges - totalPaid };
 }
+
+export interface RevenueSummary {
+  totalCharges: number;
+  totalPaid: number;
+  outstanding: number;
+  chargeCount: number;
+  paymentCount: number;
+}
+
+/** Company-wide revenue rollup across every encounter — executive analytics. */
+export async function revenueSummary(companyId: string): Promise<RevenueSummary> {
+  const sb = getSupabase();
+  let charges: BillCharge[];
+  let payments: BillPayment[];
+  if (sb) {
+    const [c, p] = await Promise.all([
+      sb.from("bill_charges").select("*").eq("company_id", companyId),
+      sb.from("bill_payments").select("*").eq("company_id", companyId),
+    ]);
+    charges = (c.data ?? []).map((r) => toCharge(r as ChargeRow));
+    payments = (p.data ?? []).map((r) => toPayment(r as PaymentRow));
+  } else {
+    charges = mem.charges.filter((x) => x.companyId === companyId);
+    payments = mem.payments.filter((x) => x.companyId === companyId);
+  }
+  const totalCharges = charges.reduce((s, c) => s + c.amount, 0);
+  const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
+  return {
+    totalCharges,
+    totalPaid,
+    outstanding: totalCharges - totalPaid,
+    chargeCount: charges.length,
+    paymentCount: payments.length,
+  };
+}

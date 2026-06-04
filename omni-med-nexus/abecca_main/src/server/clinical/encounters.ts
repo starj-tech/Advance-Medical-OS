@@ -228,3 +228,34 @@ export async function listDiagnoses(companyId: string, encounterId: string): Pro
     .filter((d) => d.companyId === companyId && d.encounterId === encounterId)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
+
+/* ----------------------- company-wide rollups (analytics) ----------------------- */
+
+/** Every encounter for a company — powers executive counts by type/status. */
+export async function listAllEncounters(companyId: string): Promise<Encounter[]> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("encounters")
+      .select("*")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false });
+    return (data ?? []).map((r) => toEncounter(r as EncounterRow));
+  }
+  return mem.encounters
+    .filter((e) => e.companyId === companyId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/** Every diagnosis for a company — powers the top-diagnoses leaderboard. */
+export async function listAllDiagnoses(companyId: string): Promise<Diagnosis[]> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("diagnoses")
+      .select("*")
+      .eq("company_id", companyId);
+    return (data ?? []).map((r) => toDiagnosis(r as DiagnosisRow));
+  }
+  return mem.diagnoses.filter((d) => d.companyId === companyId);
+}

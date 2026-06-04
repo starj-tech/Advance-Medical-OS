@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
+  BarChart3,
   BedDouble,
   LayoutDashboard,
   Pill,
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/analytics", label: "Analitik", icon: BarChart3 },
   { href: "/patients", label: "Patients", icon: Users },
   { href: "/beds", label: "Bed Board", icon: BedDouble },
   { href: "/devices", label: "Devices", icon: Radio },
