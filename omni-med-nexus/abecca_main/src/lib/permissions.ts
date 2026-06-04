@@ -20,6 +20,8 @@ export type Permission =
   | "diagnosis:write"
   | "note:read"
   | "note:write"
+  | "medication:read"
+  | "medication:order"
   | "device:read"
   | "device:write"
   | "formulary:read"
@@ -43,24 +45,25 @@ export interface PermissionSubject {
 /** Baseline permissions per tier. */
 const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
   executive: [
-    "patient:read", "encounter:read", "diagnosis:read", "note:read", "device:read",
-    "formulary:read", "tariff:read", "billing:read", "audit:read",
-    "analytics:read", "user:read", "notification:read",
+    "patient:read", "encounter:read", "diagnosis:read", "note:read",
+    "medication:read", "device:read", "formulary:read", "tariff:read",
+    "billing:read", "audit:read", "analytics:read", "user:read", "notification:read",
   ],
   manager: [
     "patient:read", "encounter:read", "encounter:write", "diagnosis:read",
-    "note:read", "note:write", "device:read", "device:write", "formulary:read",
-    "tariff:read", "tariff:manage", "billing:read", "audit:read", "analytics:read",
-    "user:read", "notification:read",
+    "note:read", "note:write", "medication:read", "medication:order", "device:read",
+    "device:write", "formulary:read", "tariff:read", "tariff:manage", "billing:read",
+    "audit:read", "analytics:read", "user:read", "notification:read",
   ],
   doctor: [
     "patient:read", "patient:write", "encounter:read", "encounter:write",
-    "diagnosis:read", "diagnosis:write", "note:read", "note:write", "device:read",
-    "formulary:read", "tariff:read", "notification:read",
+    "diagnosis:read", "diagnosis:write", "note:read", "note:write",
+    "medication:read", "medication:order", "device:read", "formulary:read",
+    "tariff:read", "notification:read",
   ],
   staff: [
-    "patient:read", "encounter:read", "note:read", "tariff:read", "billing:read",
-    "notification:read",
+    "patient:read", "encounter:read", "note:read", "medication:read", "tariff:read",
+    "billing:read", "notification:read",
   ],
 };
 
@@ -71,10 +74,10 @@ const SUBROLE_OVERRIDES: Record<string, Permission[]> = {
   "perawat-primer": ["note:read", "note:write"],
   "perawat-spesialis": ["note:read", "note:write"],
   bidan: ["note:read", "note:write"],
-  // Pharmacy
-  apoteker: ["formulary:read", "formulary:dispense"],
-  ttk: ["formulary:read", "formulary:dispense"],
-  "ka-farmasi": ["formulary:read", "formulary:dispense"],
+  // Pharmacy — pharmacists review medication orders and dispense.
+  apoteker: ["formulary:read", "formulary:dispense", "medication:read"],
+  ttk: ["formulary:read", "formulary:dispense", "medication:read"],
+  "ka-farmasi": ["formulary:read", "formulary:dispense", "medication:read"],
   // Billing / finance / cashier
   kasir: ["billing:read", "billing:manage"],
   "staf-keuangan": ["billing:read", "billing:manage"],
