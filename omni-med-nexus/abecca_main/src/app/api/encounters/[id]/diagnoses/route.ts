@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { requirePermission } from "@/server/auth/guard";
 import {
   addDiagnosis,
+  getEncounter,
   listDiagnoses,
   type DiagnosisRank,
 } from "@/server/clinical/encounters";
+import { notify } from "@/server/notify/center";
 
 export const dynamic = "force-dynamic";
 
@@ -32,5 +34,16 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     createdBy: guard.session.user.id,
   });
   if (!diagnosis) return NextResponse.json({ error: "Encounter not found" }, { status: 404 });
+  // Notify the DPJP that a diagnosis was recorded on their encounter.
+  const encounter = await getEncounter(guard.session.company.id, id);
+  if (encounter?.dpjpUserId) {
+    await notify({
+      companyId: guard.session.company.id,
+      userId: encounter.dpjpUserId,
+      title: "Diagnosis baru dicatat",
+      body: `${diagnosis.code} — ${diagnosis.description} (pasien ${encounter.patientId})`,
+      type: "clinical",
+    });
+  }
   return NextResponse.json(diagnosis, { status: 201 });
 }

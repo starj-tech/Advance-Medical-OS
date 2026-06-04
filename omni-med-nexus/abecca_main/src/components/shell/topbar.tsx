@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, Menu, Search } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { initials } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useSession } from "@/lib/use-session";
+import { NotificationBell } from "@/components/shell/notification-bell";
 
 export function Topbar({
   title,
@@ -41,14 +42,7 @@ export function Topbar({
 
         <ThemeToggle />
 
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-        >
-          <Bell className="size-[18px]" />
-          <span className="absolute right-2 top-2 size-1.5 rounded-full bg-rose-500" />
-        </button>
+        <NotificationBell />
 
         <div className="flex items-center gap-2.5 pl-1">
           <span className="grid size-9 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
