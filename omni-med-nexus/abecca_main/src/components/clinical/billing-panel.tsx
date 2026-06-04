@@ -1,10 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Receipt, Wallet } from "lucide-react";
+import { FileText, Plus, Receipt, Wallet } from "lucide-react";
 import type { Tariff } from "@/lib/types";
 import type { BillSummary, PaymentMethod } from "@/server/billing/charges";
+import type { InacbgClaim } from "@/server/billing/inacbg";
+import type { CareClass } from "@/lib/inacbg";
+import { CARE_CLASSES, CARE_CLASS_LABEL } from "@/lib/inacbg";
 import { formatIDR } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Can } from "@/components/auth/can";
 
@@ -20,6 +24,19 @@ const METHOD_LABEL: Record<PaymentMethod, string> = {
 };
 const METHODS = Object.keys(METHOD_LABEL) as PaymentMethod[];
 
+interface InacbgData {
+  preview: {
+    primaryDiagnosis: string | null;
+    cbgCode: string;
+    cbgDescription: string;
+    tariffs: Record<CareClass, number>;
+  };
+  claim: InacbgClaim | null;
+}
+const CLAIM_VARIANT: Record<string, "muted" | "info" | "success" | "danger"> = {
+  draft: "muted", submitted: "info", approved: "success", rejected: "danger",
+};
+
 export function BillingPanel({ encounterId }: { encounterId: string }) {
   const [summary, setSummary] = useState<BillSummary | null>(null);
   const [tariffs, setTariffs] = useState<Tariff[]>([]);
@@ -27,10 +44,17 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
   const [qty, setQty] = useState(1);
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [payAmount, setPayAmount] = useState("");
+  const [inacbg, setInacbg] = useState<InacbgData | null>(null);
+  const [careClass, setCareClass] = useState<CareClass>("3");
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/encounters/${encounterId}/billing`);
     if (res.ok) setSummary(await res.json());
+  }, [encounterId]);
+
+  const loadInacbg = useCallback(async () => {
+    const res = await fetch(`/api/encounters/${encounterId}/inacbg`);
+    if (res.ok) setInacbg(await res.json());
   }, [encounterId]);
 
   const loadTariffs = useCallback(async () => {
@@ -46,7 +70,26 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
     void loadTariffs();
-  }, [load, loadTariffs]);
+    void loadInacbg();
+  }, [load, loadTariffs, loadInacbg]);
+
+  const saveClaim = async () => {
+    const res = await fetch(`/api/encounters/${encounterId}/inacbg`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ careClass }),
+    });
+    if (res.ok) await loadInacbg();
+  };
+
+  const setClaimStatus = async (claimId: string, status: string) => {
+    const res = await fetch(`/api/encounters/${encounterId}/inacbg`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ claimId, status }),
+    });
+    if (res.ok) await loadInacbg();
+  };
 
   const selectedTariff = tariffs.find((t) => t.id === tariffId);
 
@@ -196,6 +239,84 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
               </div>
             </div>
           </Can>
+
+          {inacbg && (() => {
+            const { preview, claim } = inacbg;
+            const cls = claim ? claim.careClass : careClass;
+            const paket = claim ? claim.tariff : preview.tariffs[careClass];
+            const selisih = paket - summary.totalCharges;
+            return (
+              <div className="space-y-1.5 border-t border-border pt-2">
+                <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <FileText className="size-3.5" /> INA-CBG (estimasi)
+                </span>
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">
+                    {preview.cbgCode}
+                  </span>
+                  <span className="min-w-0 flex-1">{preview.cbgDescription}</span>
+                  {preview.primaryDiagnosis && (
+                    <span className="text-xs text-muted-foreground">Dx: {preview.primaryDiagnosis}</span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-0.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tarif paket ({CARE_CLASS_LABEL[cls]})</span>
+                    <span className="font-mono tabular-nums">{formatIDR(paket)}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold">
+                    <span>Selisih (paket − riil)</span>
+                    <span
+                      className={`font-mono tabular-nums ${
+                        selisih >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                      }`}
+                    >
+                      {formatIDR(selisih)}
+                    </span>
+                  </div>
+                </div>
+                {claim ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Status klaim:</span>
+                    <Badge variant={CLAIM_VARIANT[claim.status]}>{claim.status}</Badge>
+                    <Can permission="billing:manage">
+                      {claim.status === "draft" && (
+                        <Button size="sm" variant="outline" onClick={() => setClaimStatus(claim.id, "submitted")}>
+                          Ajukan
+                        </Button>
+                      )}
+                      {claim.status === "submitted" && (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => setClaimStatus(claim.id, "approved")}>
+                            Setujui
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setClaimStatus(claim.id, "rejected")}>
+                            Tolak
+                          </Button>
+                        </>
+                      )}
+                    </Can>
+                  </div>
+                ) : (
+                  <Can permission="billing:manage">
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={careClass}
+                        onChange={(e) => setCareClass(e.target.value as CareClass)}
+                        className={inputCls}
+                        aria-label="Kelas perawatan"
+                      >
+                        {CARE_CLASSES.map((c) => (
+                          <option key={c} value={c}>{CARE_CLASS_LABEL[c]}</option>
+                        ))}
+                      </select>
+                      <Button size="sm" onClick={saveClaim}>Grouping &amp; Simpan Klaim</Button>
+                    </div>
+                  </Can>
+                )}
+              </div>
+            );
+          })()}
         </>
       )}
     </div>
