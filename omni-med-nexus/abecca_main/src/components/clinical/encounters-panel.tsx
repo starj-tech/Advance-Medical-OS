@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Can } from "@/components/auth/can";
 import { PrescribePanel } from "@/components/clinical/prescribe-panel";
 import { MarPanel } from "@/components/clinical/mar-panel";
+import { DiagnosticsPanel } from "@/components/clinical/diagnostics-panel";
 
 const inputCls =
   "h-9 rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30";
@@ -315,6 +316,8 @@ export function EncountersPanel({ patientId }: { patientId: string }) {
                       <PrescribePanel encounterId={e.id} active={e.status === "in_progress"} />
 
                       <MarPanel encounterId={e.id} active={e.status === "in_progress"} />
+
+                      <DiagnosticsPanel encounterId={e.id} active={e.status === "in_progress"} />
                     </div>
                   )}
                 </li>
