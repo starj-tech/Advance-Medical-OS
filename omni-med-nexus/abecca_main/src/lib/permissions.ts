@@ -26,6 +26,8 @@ export type Permission =
   | "discharge:write"
   | "referral:read"
   | "referral:write"
+  | "nursing:read"
+  | "nursing:write"
   | "medication:read"
   | "medication:order"
   | "mar:read"
@@ -64,15 +66,16 @@ export interface PermissionSubject {
 const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
   executive: [
     "patient:read", "encounter:read", "registration:read", "diagnosis:read",
-    "note:read", "discharge:read", "referral:read", "medication:read", "mar:read",
-    "vitals:read", "bed:read", "diagnostic:read", "ikp:read", "device:read",
-    "formulary:read", "tariff:read", "billing:read", "audit:read", "analytics:read",
-    "user:read", "notification:read",
+    "note:read", "discharge:read", "referral:read", "nursing:read",
+    "medication:read", "mar:read", "vitals:read", "bed:read", "diagnostic:read",
+    "ikp:read", "device:read", "formulary:read", "tariff:read", "billing:read",
+    "audit:read", "analytics:read", "user:read", "notification:read",
   ],
   manager: [
     "patient:read", "encounter:read", "encounter:write", "registration:read",
     "registration:write", "diagnosis:read", "note:read", "note:write",
-    "discharge:read", "discharge:write", "medication:read", "medication:order",
+    "discharge:read", "discharge:write", "referral:read", "referral:write",
+    "nursing:read", "nursing:write", "medication:read", "medication:order",
     "mar:read", "vitals:read", "bed:read", "bed:manage", "diagnostic:read",
     "diagnostic:order", "ikp:read", "ikp:report", "ikp:manage", "device:read",
     "device:write", "formulary:read", "tariff:read", "tariff:manage", "billing:read",
@@ -81,16 +84,17 @@ const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
   doctor: [
     "patient:read", "patient:write", "encounter:read", "encounter:write",
     "registration:read", "diagnosis:read", "diagnosis:write", "note:read",
-    "note:write", "discharge:read", "discharge:write", "medication:read",
-    "medication:order", "mar:read", "mar:administer", "vitals:read", "vitals:record",
-    "bed:read", "bed:manage", "diagnostic:read", "diagnostic:order", "ikp:read",
-    "ikp:report", "device:read", "formulary:read", "tariff:read", "notification:read",
+    "note:write", "discharge:read", "discharge:write", "referral:read",
+    "referral:write", "nursing:read", "medication:read", "medication:order",
+    "mar:read", "mar:administer", "vitals:read", "vitals:record", "bed:read",
+    "bed:manage", "diagnostic:read", "diagnostic:order", "ikp:read", "ikp:report",
+    "device:read", "formulary:read", "tariff:read", "notification:read",
   ],
   staff: [
     "patient:read", "encounter:read", "registration:read", "registration:write",
-    "note:read", "discharge:read", "referral:read", "medication:read", "mar:read",
-    "vitals:read", "bed:read", "diagnostic:read", "ikp:read", "ikp:report",
-    "tariff:read", "billing:read", "notification:read",
+    "note:read", "discharge:read", "referral:read", "nursing:read",
+    "medication:read", "mar:read", "vitals:read", "bed:read", "diagnostic:read",
+    "ikp:read", "ikp:report", "tariff:read", "billing:read", "notification:read",
   ],
 };
 
@@ -98,10 +102,10 @@ const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
 const SUBROLE_OVERRIDES: Record<string, Permission[]> = {
   // Nursing & midwifery — CPPT, e-MAR administration, bedside observations/EWS
   // and bed management as PPA.
-  "perawat-pelaksana": ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "bed:read", "bed:manage"],
-  "perawat-primer": ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "bed:read", "bed:manage"],
-  "perawat-spesialis": ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "bed:read", "bed:manage"],
-  bidan: ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "bed:read", "bed:manage"],
+  "perawat-pelaksana": ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "nursing:read", "nursing:write", "bed:read", "bed:manage"],
+  "perawat-primer": ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "nursing:read", "nursing:write", "bed:read", "bed:manage"],
+  "perawat-spesialis": ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "nursing:read", "nursing:write", "bed:read", "bed:manage"],
+  bidan: ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "nursing:read", "nursing:write", "bed:read", "bed:manage"],
   // Laboratory & radiology — fulfil and result diagnostic orders.
   "analis-lab-atlm": ["diagnostic:read", "diagnostic:result"],
   "sp-patologi-klinik": ["diagnostic:read", "diagnostic:result"],
