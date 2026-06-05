@@ -10,6 +10,7 @@ const titles: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/analytics": "Analitik Eksekutif",
   "/registration": "Pendaftaran & Antrian",
+  "/appointments": "Janji Temu",
   "/patients": "Patients",
   "/beds": "Bed Board",
   "/surgery": "Jadwal Operasi",
