@@ -17,6 +17,7 @@ import { DiagnosticsPanel } from "@/components/clinical/diagnostics-panel";
 import { BillingPanel } from "@/components/clinical/billing-panel";
 import { SatusehatPanel } from "@/components/clinical/satusehat-panel";
 import { DischargePanel } from "@/components/clinical/discharge-panel";
+import { ReferralPanel } from "@/components/clinical/referral-panel";
 
 const inputCls =
   "h-9 rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30";
@@ -328,6 +329,8 @@ export function EncountersPanel({ patientId }: { patientId: string }) {
                       <BillingPanel encounterId={e.id} />
 
                       <SatusehatPanel encounterId={e.id} />
+
+                      <ReferralPanel encounterId={e.id} active={e.status === "in_progress"} />
 
                       <DischargePanel
                         encounterId={e.id}

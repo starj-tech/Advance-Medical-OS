@@ -24,6 +24,8 @@ export type Permission =
   | "note:write"
   | "discharge:read"
   | "discharge:write"
+  | "referral:read"
+  | "referral:write"
   | "medication:read"
   | "medication:order"
   | "mar:read"
@@ -62,10 +64,10 @@ export interface PermissionSubject {
 const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
   executive: [
     "patient:read", "encounter:read", "registration:read", "diagnosis:read",
-    "note:read", "discharge:read", "medication:read", "mar:read", "vitals:read",
-    "bed:read", "diagnostic:read", "ikp:read", "device:read", "formulary:read",
-    "tariff:read", "billing:read", "audit:read", "analytics:read", "user:read",
-    "notification:read",
+    "note:read", "discharge:read", "referral:read", "medication:read", "mar:read",
+    "vitals:read", "bed:read", "diagnostic:read", "ikp:read", "device:read",
+    "formulary:read", "tariff:read", "billing:read", "audit:read", "analytics:read",
+    "user:read", "notification:read",
   ],
   manager: [
     "patient:read", "encounter:read", "encounter:write", "registration:read",
@@ -86,9 +88,9 @@ const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
   ],
   staff: [
     "patient:read", "encounter:read", "registration:read", "registration:write",
-    "note:read", "discharge:read", "medication:read", "mar:read", "vitals:read",
-    "bed:read", "diagnostic:read", "ikp:read", "ikp:report", "tariff:read",
-    "billing:read", "notification:read",
+    "note:read", "discharge:read", "referral:read", "medication:read", "mar:read",
+    "vitals:read", "bed:read", "diagnostic:read", "ikp:read", "ikp:report",
+    "tariff:read", "billing:read", "notification:read",
   ],
 };
 
