@@ -22,6 +22,8 @@ export type Permission =
   | "diagnosis:write"
   | "note:read"
   | "note:write"
+  | "discharge:read"
+  | "discharge:write"
   | "medication:read"
   | "medication:order"
   | "mar:read"
@@ -60,32 +62,33 @@ export interface PermissionSubject {
 const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
   executive: [
     "patient:read", "encounter:read", "registration:read", "diagnosis:read",
-    "note:read", "medication:read", "mar:read", "vitals:read", "bed:read",
-    "diagnostic:read", "ikp:read", "device:read", "formulary:read", "tariff:read",
-    "billing:read", "audit:read", "analytics:read", "user:read", "notification:read",
+    "note:read", "discharge:read", "medication:read", "mar:read", "vitals:read",
+    "bed:read", "diagnostic:read", "ikp:read", "device:read", "formulary:read",
+    "tariff:read", "billing:read", "audit:read", "analytics:read", "user:read",
+    "notification:read",
   ],
   manager: [
     "patient:read", "encounter:read", "encounter:write", "registration:read",
     "registration:write", "diagnosis:read", "note:read", "note:write",
-    "medication:read", "medication:order", "mar:read", "vitals:read", "bed:read",
-    "bed:manage", "diagnostic:read", "diagnostic:order", "ikp:read", "ikp:report",
-    "ikp:manage", "device:read", "device:write", "formulary:read", "tariff:read",
-    "tariff:manage", "billing:read", "audit:read", "analytics:read", "user:read",
-    "notification:read",
+    "discharge:read", "discharge:write", "medication:read", "medication:order",
+    "mar:read", "vitals:read", "bed:read", "bed:manage", "diagnostic:read",
+    "diagnostic:order", "ikp:read", "ikp:report", "ikp:manage", "device:read",
+    "device:write", "formulary:read", "tariff:read", "tariff:manage", "billing:read",
+    "audit:read", "analytics:read", "user:read", "notification:read",
   ],
   doctor: [
     "patient:read", "patient:write", "encounter:read", "encounter:write",
     "registration:read", "diagnosis:read", "diagnosis:write", "note:read",
-    "note:write", "medication:read", "medication:order", "mar:read",
-    "mar:administer", "vitals:read", "vitals:record", "bed:read", "bed:manage",
-    "diagnostic:read", "diagnostic:order", "ikp:read", "ikp:report", "device:read",
-    "formulary:read", "tariff:read", "notification:read",
+    "note:write", "discharge:read", "discharge:write", "medication:read",
+    "medication:order", "mar:read", "mar:administer", "vitals:read", "vitals:record",
+    "bed:read", "bed:manage", "diagnostic:read", "diagnostic:order", "ikp:read",
+    "ikp:report", "device:read", "formulary:read", "tariff:read", "notification:read",
   ],
   staff: [
     "patient:read", "encounter:read", "registration:read", "registration:write",
-    "note:read", "medication:read", "mar:read", "vitals:read", "bed:read",
-    "diagnostic:read", "ikp:read", "ikp:report", "tariff:read", "billing:read",
-    "notification:read",
+    "note:read", "discharge:read", "medication:read", "mar:read", "vitals:read",
+    "bed:read", "diagnostic:read", "ikp:read", "ikp:report", "tariff:read",
+    "billing:read", "notification:read",
   ],
 };
 
