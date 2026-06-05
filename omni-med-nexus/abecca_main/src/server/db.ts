@@ -185,6 +185,13 @@ const memory = {
     return med;
   },
 
+  decrementStock: (medId: number, quantity: number): FormularyItem | undefined => {
+    const med = db.formulary.find((f) => f.id === medId);
+    if (!med) return undefined;
+    med.stockQuantity = Math.max(0, med.stockQuantity - quantity);
+    return med;
+  },
+
   admitPatient: (input: NewPatientInput): Patient => {
     const maxNum = db.patients.reduce((m, p) => {
       const n = Number(p.id.replace(/\D/g, ""));
@@ -310,6 +317,16 @@ export async function restockMedication(
   return sb
     ? supa.restockMedication(sb, medId, quantity)
     : memory.restockMedication(medId, quantity);
+}
+
+export async function decrementStock(
+  medId: number,
+  quantity: number,
+): Promise<FormularyItem | undefined> {
+  const sb = getSupabase();
+  return sb
+    ? supa.decrementStock(sb, medId, quantity)
+    : memory.decrementStock(medId, quantity);
 }
 
 export async function admitPatient(input: NewPatientInput): Promise<Patient> {

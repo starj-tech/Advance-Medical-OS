@@ -13,6 +13,7 @@ const titles: Record<string, string> = {
   "/beds": "Bed Board",
   "/devices": "Devices",
   "/formulary": "Formulary",
+  "/pharmacy": "Dispensing Farmasi",
   "/tariffs": "Tariffs",
   "/safety": "Keselamatan Pasien",
   "/audit": "Audit Trail",

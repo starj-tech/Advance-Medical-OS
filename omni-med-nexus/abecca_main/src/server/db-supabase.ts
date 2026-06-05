@@ -442,6 +442,27 @@ export async function restockMedication(
   return med;
 }
 
+/** Deplete formulary stock by a quantity, clamped at zero. Used by pharmacy dispensing. */
+export async function decrementStock(
+  sb: SupabaseClient,
+  medId: number,
+  quantity: number,
+): Promise<FormularyItem | undefined> {
+  const { data: medRow } = await sb
+    .from("formulary")
+    .select("*")
+    .eq("id", medId)
+    .maybeSingle<FormularyRow>();
+  if (!medRow) return undefined;
+  const med = rowToMed(medRow);
+  med.stockQuantity = Math.max(0, med.stockQuantity - quantity);
+  await sb
+    .from("formulary")
+    .update({ stock_quantity: med.stockQuantity })
+    .eq("id", medId);
+  return med;
+}
+
 export type NewPatientInput = {
   id?: string;
   name: string;

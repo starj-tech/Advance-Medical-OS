@@ -118,6 +118,22 @@ export async function listMedicationOrders(
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
+/** Company-wide medication orders — feeds the pharmacy dispensing worklist. */
+export async function listAllMedicationOrders(companyId: string): Promise<MedicationOrder[]> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("medication_orders")
+      .select("*")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: true });
+    return (data ?? []).map((r) => toOrder(r as Row));
+  }
+  return mem
+    .filter((o) => o.companyId === companyId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
 /** Active drug names for the same encounter — input to interaction screening. */
 export async function activeDrugNames(
   companyId: string,
