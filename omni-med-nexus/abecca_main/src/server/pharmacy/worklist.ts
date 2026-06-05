@@ -23,10 +23,19 @@ export interface PendingOrder {
   prescribedAt: string;
 }
 
+export interface LowStockItem {
+  formularyId: number;
+  medicationName: string;
+  dosage: string;
+  stockQuantity: number;
+  reorderLevel: number;
+}
+
 export interface PharmacyWorklist {
   generatedAt: string;
   pending: PendingOrder[];
   recent: Dispense[];
+  lowStock: LowStockItem[];
 }
 
 export async function buildPharmacyWorklist(companyId: string): Promise<PharmacyWorklist> {
@@ -59,9 +68,21 @@ export async function buildPharmacyWorklist(companyId: string): Promise<Pharmacy
       };
     });
 
+  const lowStock: LowStockItem[] = formulary
+    .filter((f) => f.stockQuantity <= f.reorderLevel)
+    .sort((a, b) => a.stockQuantity - b.stockQuantity)
+    .map((f) => ({
+      formularyId: f.id,
+      medicationName: f.medicationName,
+      dosage: f.dosage,
+      stockQuantity: f.stockQuantity,
+      reorderLevel: f.reorderLevel,
+    }));
+
   return {
     generatedAt: new Date().toISOString(),
     pending,
     recent: dispenses.slice(0, 20),
+    lowStock,
   };
 }
