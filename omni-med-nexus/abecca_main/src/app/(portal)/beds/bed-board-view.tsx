@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { BedDouble, Building2, CircleCheck, Plus } from "lucide-react";
+import { BedDouble, Building2, CircleCheck, LogIn, Plus } from "lucide-react";
 import type { BedStatus, BoardWard } from "@/server/facility/beds";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,7 @@ export function BedBoardView() {
   const [bedWardId, setBedWardId] = useState("");
   const [bedLabel, setBedLabel] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const [admitPatientId, setAdmitPatientId] = useState("");
 
   const load = useCallback(async () => {
     const res = await fetch("/api/beds");
@@ -83,6 +84,22 @@ export function BedBoardView() {
     });
     if (res.ok) await load();
   };
+
+  const admit = async (bedId: string) => {
+    if (!admitPatientId.trim()) return;
+    const res = await fetch("/api/admissions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ patientId: admitPatientId.trim(), bedId }),
+    });
+    if (res.ok) {
+      setAdmitPatientId("");
+      setSelected(null);
+      await load();
+    }
+  };
+
+  const selectedBed = board.flatMap((w) => w.beds).find((b) => b.id === selected);
 
   const totals = board.reduce(
     (acc, w) => {
@@ -207,13 +224,30 @@ export function BedBoardView() {
 
               {selected && w.beds.some((b) => b.id === selected) && (
                 <Can permission="bed:manage">
-                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
-                    <span className="text-xs text-muted-foreground">Ubah status bed terpilih:</span>
-                    {STATUSES.map((s) => (
-                      <Button key={s} size="sm" variant="outline" onClick={() => setStatus(selected, s)}>
-                        {STATUS_LABEL[s]}
-                      </Button>
-                    ))}
+                  <div className="mt-3 space-y-2 border-t border-border pt-3">
+                    {selectedBed?.status === "available" && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Admisi rawat inap ke bed {selectedBed.label}:</span>
+                        <input
+                          value={admitPatientId}
+                          onChange={(e) => setAdmitPatientId(e.target.value)}
+                          placeholder="No. RM / pasien"
+                          className={inputCls}
+                          aria-label="ID pasien admisi"
+                        />
+                        <Button size="sm" onClick={() => admit(selected)} disabled={!admitPatientId.trim()}>
+                          <LogIn className="size-4" /> Admisi
+                        </Button>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Ubah status bed terpilih:</span>
+                      {STATUSES.map((s) => (
+                        <Button key={s} size="sm" variant="outline" onClick={() => setStatus(selected, s)}>
+                          {STATUS_LABEL[s]}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </Can>
               )}
