@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Can } from "@/components/auth/can";
+import { VitalsPanel } from "@/components/clinical/vitals-panel";
 import { PrescribePanel } from "@/components/clinical/prescribe-panel";
 import { MarPanel } from "@/components/clinical/mar-panel";
 import { DiagnosticsPanel } from "@/components/clinical/diagnostics-panel";
@@ -314,6 +315,8 @@ export function EncountersPanel({ patientId }: { patientId: string }) {
                           </Can>
                         )}
                       </div>
+
+                      <VitalsPanel encounterId={e.id} active={e.status === "in_progress"} />
 
                       <PrescribePanel encounterId={e.id} active={e.status === "in_progress"} />
 

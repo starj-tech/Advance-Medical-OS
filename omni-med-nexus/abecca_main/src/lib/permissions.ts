@@ -24,6 +24,8 @@ export type Permission =
   | "medication:order"
   | "mar:read"
   | "mar:administer"
+  | "vitals:read"
+  | "vitals:record"
   | "bed:read"
   | "bed:manage"
   | "diagnostic:read"
@@ -56,39 +58,41 @@ export interface PermissionSubject {
 const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
   executive: [
     "patient:read", "encounter:read", "diagnosis:read", "note:read",
-    "medication:read", "mar:read", "bed:read", "diagnostic:read", "ikp:read",
-    "device:read", "formulary:read", "tariff:read", "billing:read", "audit:read",
-    "analytics:read", "user:read", "notification:read",
+    "medication:read", "mar:read", "vitals:read", "bed:read", "diagnostic:read",
+    "ikp:read", "device:read", "formulary:read", "tariff:read", "billing:read",
+    "audit:read", "analytics:read", "user:read", "notification:read",
   ],
   manager: [
     "patient:read", "encounter:read", "encounter:write", "diagnosis:read",
     "note:read", "note:write", "medication:read", "medication:order", "mar:read",
-    "bed:read", "bed:manage", "diagnostic:read", "diagnostic:order", "ikp:read",
-    "ikp:report", "ikp:manage", "device:read", "device:write", "formulary:read",
-    "tariff:read", "tariff:manage", "billing:read", "audit:read", "analytics:read",
-    "user:read", "notification:read",
+    "vitals:read", "bed:read", "bed:manage", "diagnostic:read", "diagnostic:order",
+    "ikp:read", "ikp:report", "ikp:manage", "device:read", "device:write",
+    "formulary:read", "tariff:read", "tariff:manage", "billing:read", "audit:read",
+    "analytics:read", "user:read", "notification:read",
   ],
   doctor: [
     "patient:read", "patient:write", "encounter:read", "encounter:write",
     "diagnosis:read", "diagnosis:write", "note:read", "note:write",
-    "medication:read", "medication:order", "mar:read", "mar:administer", "bed:read",
-    "bed:manage", "diagnostic:read", "diagnostic:order", "ikp:read", "ikp:report",
-    "device:read", "formulary:read", "tariff:read", "notification:read",
+    "medication:read", "medication:order", "mar:read", "mar:administer",
+    "vitals:read", "vitals:record", "bed:read", "bed:manage", "diagnostic:read",
+    "diagnostic:order", "ikp:read", "ikp:report", "device:read", "formulary:read",
+    "tariff:read", "notification:read",
   ],
   staff: [
     "patient:read", "encounter:read", "note:read", "medication:read", "mar:read",
-    "bed:read", "diagnostic:read", "ikp:read", "ikp:report", "tariff:read",
-    "billing:read", "notification:read",
+    "vitals:read", "bed:read", "diagnostic:read", "ikp:read", "ikp:report",
+    "tariff:read", "billing:read", "notification:read",
   ],
 };
 
 /** Additive grants keyed by sub-role slug (lib/rbac.ts). */
 const SUBROLE_OVERRIDES: Record<string, Permission[]> = {
-  // Nursing & midwifery — CPPT, e-MAR administration and bed management as PPA.
-  "perawat-pelaksana": ["note:read", "note:write", "mar:read", "mar:administer", "bed:read", "bed:manage"],
-  "perawat-primer": ["note:read", "note:write", "mar:read", "mar:administer", "bed:read", "bed:manage"],
-  "perawat-spesialis": ["note:read", "note:write", "mar:read", "mar:administer", "bed:read", "bed:manage"],
-  bidan: ["note:read", "note:write", "mar:read", "mar:administer", "bed:read", "bed:manage"],
+  // Nursing & midwifery — CPPT, e-MAR administration, bedside observations/EWS
+  // and bed management as PPA.
+  "perawat-pelaksana": ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "bed:read", "bed:manage"],
+  "perawat-primer": ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "bed:read", "bed:manage"],
+  "perawat-spesialis": ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "bed:read", "bed:manage"],
+  bidan: ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "bed:read", "bed:manage"],
   // Laboratory & radiology — fulfil and result diagnostic orders.
   "analis-lab-atlm": ["diagnostic:read", "diagnostic:result"],
   "sp-patologi-klinik": ["diagnostic:read", "diagnostic:result"],

@@ -10,6 +10,7 @@
  * weights are tunable. Pure & client-safe (only a type import, erased at build).
  */
 import type { EncounterType } from "@/server/clinical/encounters";
+import type { EwsBand } from "@/lib/ews";
 
 export type RiskBand = "low" | "medium" | "high";
 
@@ -31,6 +32,8 @@ export interface RiskInput {
   currentType: EncounterType;
   /** Patient age in years, when known. */
   ageYears?: number | null;
+  /** Latest Early Warning Score band, when vitals have been recorded. */
+  latestEwsBand?: EwsBand | null;
 }
 
 export interface RiskResult {
@@ -76,6 +79,10 @@ export function scoreEncounterRisk(input: RiskInput): RiskResult {
   if (input.chronicCount >= 2) add("Multimorbiditas kronis (≥2)", 20);
   else if (input.chronicCount === 1) add("Kondisi kronis", 10);
   if (input.diagnosisCount >= 4) add("Beban diagnosis tinggi (≥4)", 8);
+
+  // Acuity from the latest Early Warning Score — a real-time deterioration signal.
+  if (input.latestEwsBand === "high") add("EWS tinggi", 25);
+  else if (input.latestEwsBand === "medium") add("EWS sedang", 12);
 
   // Current presentation.
   if (input.currentType === "ed") add("Masuk via IGD", 8);

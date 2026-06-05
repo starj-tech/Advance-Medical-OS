@@ -10,7 +10,9 @@ import {
   listAllDiagnoses,
   listAllEncounters,
 } from "../clinical/encounters";
+import { listAllObservations } from "../clinical/observations";
 import { isChronicCode, scoreEncounterRisk, type RiskResult } from "@/lib/risk";
+import type { EwsBand } from "@/lib/ews";
 
 export interface PatientRisk extends RiskResult {
   patientId: string;
@@ -18,6 +20,7 @@ export interface PatientRisk extends RiskResult {
   encounterType: EncounterType;
   primaryDiagnosis: string | null;
   priorEncounters: number;
+  latestEwsBand: EwsBand | null;
 }
 
 export interface RiskRegister {
@@ -27,9 +30,10 @@ export interface RiskRegister {
 }
 
 export async function buildRiskRegister(companyId: string): Promise<RiskRegister> {
-  const [encounters, diagnoses] = await Promise.all([
+  const [encounters, diagnoses, observations] = await Promise.all([
     listAllEncounters(companyId),
     listAllDiagnoses(companyId),
+    listAllObservations(companyId),
   ]);
 
   const dxByEncounter = new Map<string, Diagnosis[]>();
@@ -39,11 +43,18 @@ export async function buildRiskRegister(companyId: string): Promise<RiskRegister
     else dxByEncounter.set(d.encounterId, [d]);
   }
 
+  // Latest EWS band per encounter — observations arrive newest-first.
+  const latestEws = new Map<string, EwsBand>();
+  for (const o of observations) {
+    if (!latestEws.has(o.encounterId)) latestEws.set(o.encounterId, o.ewsBand);
+  }
+
   const active = encounters.filter((e) => e.status === "in_progress");
   const patients: PatientRisk[] = active.map((e) => {
     const prior = encounters.filter((x) => x.patientId === e.patientId && x.id !== e.id);
     const dxs = dxByEncounter.get(e.id) ?? [];
     const primary = dxs.find((d) => d.rank === "primary") ?? dxs[0];
+    const ewsBand = latestEws.get(e.id) ?? null;
     const result = scoreEncounterRisk({
       priorEncounters: prior.length,
       edVisits: prior.filter((x) => x.type === "ed").length,
@@ -51,6 +62,7 @@ export async function buildRiskRegister(companyId: string): Promise<RiskRegister
       chronicCount: dxs.filter((d) => isChronicCode(d.code)).length,
       currentType: e.type,
       ageYears: null,
+      latestEwsBand: ewsBand,
     });
     return {
       ...result,
@@ -59,6 +71,7 @@ export async function buildRiskRegister(companyId: string): Promise<RiskRegister
       encounterType: e.type,
       primaryDiagnosis: primary?.description ?? null,
       priorEncounters: prior.length,
+      latestEwsBand: ewsBand,
     };
   });
 
