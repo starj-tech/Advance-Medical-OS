@@ -21,6 +21,7 @@ import { ReferralPanel } from "@/components/clinical/referral-panel";
 import { NursingCarePanel } from "@/components/clinical/nursing-care-panel";
 import { DietPanel } from "@/components/clinical/diet-panel";
 import { EPrescriptionPanel } from "@/components/clinical/e-prescription-panel";
+import { FollowUpPanel } from "@/components/clinical/follow-up-panel";
 
 const inputCls =
   "h-9 rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30";
@@ -332,6 +333,8 @@ export function EncountersPanel({ patientId }: { patientId: string }) {
                       <NursingCarePanel encounterId={e.id} active={e.status === "in_progress"} />
 
                       <DietPanel encounterId={e.id} active={e.status === "in_progress"} />
+
+                      <FollowUpPanel encounterId={e.id} active={e.status === "in_progress"} />
 
                       <DiagnosticsPanel encounterId={e.id} active={e.status === "in_progress"} />
 

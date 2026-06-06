@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Ticket, UserPlus } from "lucide-react";
+import { BellRing, Send, Ticket, UserPlus } from "lucide-react";
 import type { QueueStatus, QueueTicket } from "@/server/registration/queue";
+import type { FollowUp } from "@/server/clinical/follow-ups";
 import { POLYCLINICS } from "@/lib/polyclinics";
+import { formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,16 +41,30 @@ export function RegistrationView() {
   const [patientId, setPatientId] = useState("");
   const [polyclinic, setPolyclinic] = useState<string>(POLYCLINICS[0]);
   const [busy, setBusy] = useState(false);
+  const [due, setDue] = useState<FollowUp[]>([]);
+  const [dispatching, setDispatching] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/registration/queue");
     setQueue(res.ok ? await res.json() : []);
     setLoading(false);
   }, []);
+  const loadReminders = useCallback(async () => {
+    const res = await fetch("/api/reminders");
+    setDue(res.ok ? (await res.json()).due : []);
+  }, []);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
-  }, [load]);
+    void loadReminders();
+  }, [load, loadReminders]);
+
+  const dispatchReminders = async () => {
+    setDispatching(true);
+    const res = await fetch("/api/reminders/dispatch", { method: "POST" });
+    setDispatching(false);
+    if (res.ok) await loadReminders();
+  };
 
   const register = async () => {
     if (!patientId.trim()) return;
@@ -127,6 +143,37 @@ export function RegistrationView() {
           </CardContent>
         </Card>
       </Can>
+
+      {due.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BellRing className="size-4 text-primary" /> Kontrol Ulang Jatuh Tempo
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Badge variant="warning">{due.length} jatuh tempo</Badge>
+              <Can permission="registration:write">
+                <Button size="sm" onClick={dispatchReminders} disabled={dispatching}>
+                  <Send className="size-4" /> Kirim Pengingat
+                </Button>
+              </Can>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ul className="divide-y divide-border">
+              {due.map((f) => (
+                <li key={f.id} className="flex flex-wrap items-center gap-2.5 px-5 py-3">
+                  <span className="text-sm font-medium">{f.patientId}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatDate(f.dueDate)} · {f.reason}
+                    {f.patientPhone ? ` · WA ${f.patientPhone}` : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
