@@ -14,6 +14,7 @@ import {
   Radio,
   Receipt,
   Scissors,
+  Sparkles,
   ShieldAlert,
   ShieldCheck,
   Users,
@@ -23,6 +24,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/analytics", label: "Analitik", icon: BarChart3 },
+  { href: "/copilot", label: "Copilot", icon: Sparkles },
   { href: "/registration", label: "Pendaftaran", icon: ClipboardList },
   { href: "/appointments", label: "Janji Temu", icon: CalendarClock },
   { href: "/patients", label: "Patients", icon: Users },
