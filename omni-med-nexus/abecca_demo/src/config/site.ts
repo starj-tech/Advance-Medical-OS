@@ -3,21 +3,21 @@
  * Consumed by metadata, manifest, robots and sitemap.
  */
 export const siteConfig = {
-  name: "Abecca Demo",
-  title: "Abecca Demo — Omni-Med Nexus",
-  description: "Demo and training sandbox for the Omni-Med Nexus platform.",
+  name: "Abecca",
+  title: "Abecca — Omni-Med Nexus",
+  description: "Clinical portal for the Omni-Med Nexus platform.",
   keywords: [
-    "Abecca Demo",
+    "Abecca",
     "Omni-Med Nexus",
-    "demo",
-    "training sandbox",
+    "clinical portal",
     "healthcare platform",
+    "medical software",
   ],
   /** Browser chrome + PWA colors. */
-  themeColor: "#0a0a0a",
-  backgroundColor: "#0a0a0a",
-  /** Training sandbox — keep out of search engines. */
-  indexable: false,
+  themeColor: "#000000",
+  backgroundColor: "#000000",
+  /** Whether search engines may index this app. */
+  indexable: true,
 } as const;
 
 /**

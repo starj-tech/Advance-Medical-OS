@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    return [{ source: "/", destination: "/showcase", permanent: false }];
+    return [{ source: "/", destination: "/dashboard", permanent: false }];
   },
 };
 
