@@ -7,6 +7,15 @@ import { Button } from "@/components/ui/button";
 const inputCls =
   "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30";
 
+// Zero-config preview accounts (seeded in the in-memory auth store).
+const DEMO_COMPANY = "ABECCA-DEMO";
+const DEMO_PASSWORD = "AbeccaDemo123!";
+const DEMO_ACCOUNTS = [
+  { label: "Direktur TI (CIO)", email: "cio@abecca.demo" },
+  { label: "Manajer TI", email: "it@abecca.demo" },
+  { label: "Teknisi IPSRS", email: "teknisi@abecca.demo" },
+];
+
 export default function LoginPage() {
   const router = useRouter();
   const [companyCode, setCompanyCode] = useState("");
@@ -14,6 +23,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const fillDemo = (demoEmail: string) => {
+    setCompanyCode(DEMO_COMPANY);
+    setEmail(demoEmail);
+    setPassword(DEMO_PASSWORD);
+    setError(null);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +109,26 @@ export default function LoginPage() {
           {loading ? "Memproses…" : "Masuk"}
         </Button>
       </form>
+
+      <div className="mt-4 rounded-lg border border-border bg-muted/50 p-3">
+        <p className="text-xs font-semibold">Akun demo</p>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">
+          Company ID <span className="font-mono text-foreground">{DEMO_COMPANY}</span> · password{" "}
+          <span className="font-mono text-foreground">{DEMO_PASSWORD}</span>
+        </p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {DEMO_ACCOUNTS.map((d) => (
+            <button
+              key={d.email}
+              type="button"
+              onClick={() => fillDemo(d.email)}
+              className="rounded-md border border-border bg-surface px-2 py-1 text-[11px] font-medium transition-colors hover:border-primary hover:text-primary"
+            >
+              {d.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

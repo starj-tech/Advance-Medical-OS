@@ -6,37 +6,39 @@
 
 /* ==========================================================================
    Abecca — Clinical Light design system
-   Calm neutral surfaces, a medical teal primary, and clinical status colors.
-   Ships light + dark; the dark palette also backs the legacy boot screen.
+   Calm sky-blue surfaces and a confident clinical-blue primary, drawn from the
+   Abecca mark (soft sky blue + white). Tuned for clinicians, executives and
+   hospital leadership: airy, trustworthy, high-legibility. Ships light + dark;
+   the dark palette also backs the legacy boot screen.
    ========================================================================== */
 
 :root {
-  --background: #f6f8fa;
+  --background: #eef4fa; /* soft sky-tinted canvas */
   --surface: #ffffff;
-  --foreground: #0c1622;
-  --muted: #eef2f6;
-  --muted-foreground: #5b6b7b;
-  --border: #e2e8f0;
+  --foreground: #0f2233; /* deep blue-slate ink */
+  --muted: #e4eef7;
+  --muted-foreground: #56708a;
+  --border: #d4e3f1;
 
-  --primary: #0d9488; /* teal-600 — medical, trustworthy */
+  --primary: #2576b6; /* clinical sky-blue — AA on white, on-brand */
   --primary-foreground: #ffffff;
 
-  --ring: #0d9488;
+  --ring: #2576b6;
 }
 
 .dark {
-    --background: #0a0f16;
-    --surface: #111927;
-    --foreground: #e6edf3;
-    --muted: #1a2333;
-    --muted-foreground: #8b9bad;
-    --border: #1f2a3a;
+  --background: #0a1722;
+  --surface: #0f2130;
+  --foreground: #e5eef6;
+  --muted: #17293a;
+  --muted-foreground: #91a7bc;
+  --border: #21384c;
 
-    --primary: #2dd4bf; /* teal-400 — brighter for dark surfaces */
-    --primary-foreground: #04211d;
+  --primary: #6cb6e6; /* airy sky-blue — pops on dark surfaces */
+  --primary-foreground: #06243a;
 
-    --ring: #2dd4bf;
-  }
+  --ring: #6cb6e6;
+}
 
 @theme inline {
   --color-background: var(--background);

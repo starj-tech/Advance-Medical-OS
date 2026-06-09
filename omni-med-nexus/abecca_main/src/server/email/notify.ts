@@ -45,7 +45,7 @@ export async function sendEmployeeInvite(args: {
       <h2>Undangan akun Abecca</h2>
       <p>Halo ${esc(args.fullName)}, Anda diundang untuk mengakses <strong>${esc(args.legalName)}</strong> di Abecca.</p>
       <p>Company ID: <strong style="font-family:monospace">${esc(args.companyCode)}</strong></p>
-      <p><a href="${esc(args.inviteUrl)}" style="display:inline-block;background:#0d9488;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">Setel password Anda</a></p>
+      <p><a href="${esc(args.inviteUrl)}" style="display:inline-block;background:#2576b6;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">Setel password Anda</a></p>
       <p style="color:#666;font-size:13px">Tautan berlaku 7 hari. Setelah menyetel password, login dengan Company ID + email + password Anda.</p>
     </div>`;
   await sendEmail({

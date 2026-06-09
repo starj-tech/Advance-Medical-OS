@@ -127,6 +127,51 @@ const mem: Mem =
     sessions: new Map(),
   });
 
+/* --------------------------- demo seed (in-memory) ------------------------ */
+// Zero-config preview accounts so reviewers can sign in without Supabase. This
+// only ever touches the in-memory singleton; it is never written to Supabase
+// (when Supabase is configured the live accounts are used instead).
+export const DEMO_COMPANY_CODE = "ABECCA-DEMO";
+export const DEMO_PASSWORD = "AbeccaDemo123!";
+
+function seedDemo(): void {
+  if (mem.codeToId.has(DEMO_COMPANY_CODE)) return;
+  const companyId = "demo-company-0001";
+  mem.companies.set(companyId, {
+    id: companyId,
+    companyCode: DEMO_COMPANY_CODE,
+    legalName: "RS Abecca Demo",
+    picEmail: "dirut@abecca.demo",
+    plan: "enterprise",
+    status: "active",
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+  });
+  mem.codeToId.set(DEMO_COMPANY_CODE, companyId);
+  const passwordHash = hashPassword(DEMO_PASSWORD);
+  const demoUsers: { email: string; fullName: string; tier: RoleTier; subRole: string; admin: boolean }[] = [
+    { email: "dirut@abecca.demo", fullName: "dr. Dewi Lestari, MARS", tier: "executive", subRole: "dir-utama", admin: true },
+    { email: "dokter@abecca.demo", fullName: "dr. Andi Pratama", tier: "doctor", subRole: "dokter-umum", admin: false },
+    { email: "farmasi@abecca.demo", fullName: "apt. Sri Wahyuni, S.Farm", tier: "manager", subRole: "ka-farmasi", admin: false },
+  ];
+  for (const u of demoUsers) {
+    mem.users.push({
+      id: crypto.randomUUID(),
+      company_id: companyId,
+      full_name: u.fullName,
+      email: u.email,
+      role_tier: u.tier,
+      sub_role: u.subRole,
+      password_hash: passwordHash,
+      is_company_admin: u.admin,
+      status: "active",
+      invite_token_hash: null,
+      invite_expires_at: null,
+    });
+  }
+}
+seedDemo();
+
 function rowToUser(r: Row): AuthUser {
   return {
     id: r.id,

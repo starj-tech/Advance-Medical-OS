@@ -11,7 +11,7 @@
  */
 import { createHash, randomBytes } from "node:crypto";
 import { getSupabase } from "../supabase";
-import { verifyPassword } from "./password";
+import { hashPassword, verifyPassword } from "./password";
 
 export type RoleTier = "executive" | "manager" | "doctor" | "staff";
 
@@ -78,11 +78,61 @@ function toCompany(r: CompanyRow): Company {
   return { id: r.id, companyCode: r.company_code, legalName: r.legal_name, plan: r.plan, status: r.status };
 }
 
-// In-memory sessions for standalone preview (no shared user store there).
-const g = globalThis as unknown as {
-  __abeccaItSessions?: Map<string, { userId: string; companyId: string; expiresAt: number }>;
+/* --------------------------- in-memory backend ---------------------------- */
+// Standalone preview (no Supabase): a seeded in-memory identity store so the IT
+// app has working demo accounts without the shared database. Mirrors the main
+// app's demo seed (same Company ID + password).
+type ItMem = {
+  companies: Map<string, Company>;
+  codeToId: Map<string, string>;
+  users: UserRow[];
+  sessions: Map<string, { userId: string; companyId: string; expiresAt: number }>;
 };
-const sessions = g.__abeccaItSessions ?? (g.__abeccaItSessions = new Map());
+const g = globalThis as unknown as { __abeccaItAuth?: ItMem };
+const mem: ItMem =
+  g.__abeccaItAuth ??
+  (g.__abeccaItAuth = {
+    companies: new Map(),
+    codeToId: new Map(),
+    users: [],
+    sessions: new Map(),
+  });
+
+export const DEMO_COMPANY_CODE = "ABECCA-DEMO";
+export const DEMO_PASSWORD = "AbeccaDemo123!";
+
+function seedDemo(): void {
+  if (mem.codeToId.has(DEMO_COMPANY_CODE)) return;
+  const companyId = "demo-company-0001";
+  mem.companies.set(companyId, {
+    id: companyId,
+    companyCode: DEMO_COMPANY_CODE,
+    legalName: "RS Abecca Demo",
+    plan: "enterprise",
+    status: "active",
+  });
+  mem.codeToId.set(DEMO_COMPANY_CODE, companyId);
+  const passwordHash = hashPassword(DEMO_PASSWORD);
+  const demoUsers: { email: string; fullName: string; tier: RoleTier; subRole: string; admin: boolean }[] = [
+    { email: "cio@abecca.demo", fullName: "Ir. Bayu Nugroho, M.Kom", tier: "executive", subRole: "cio", admin: true },
+    { email: "it@abecca.demo", fullName: "Rangga Saputra", tier: "manager", subRole: "mgr-ti", admin: false },
+    { email: "teknisi@abecca.demo", fullName: "Yusuf Hidayat", tier: "staff", subRole: "teknisi-ipsrs", admin: false },
+  ];
+  for (const u of demoUsers) {
+    mem.users.push({
+      id: crypto.randomUUID(),
+      company_id: companyId,
+      full_name: u.fullName,
+      email: u.email,
+      role_tier: u.tier,
+      sub_role: u.subRole,
+      password_hash: passwordHash,
+      is_company_admin: u.admin,
+      status: "active",
+    });
+  }
+}
+seedDemo();
 
 export async function authenticate(
   companyCode: string,
@@ -90,7 +140,16 @@ export async function authenticate(
   password: string,
 ): Promise<AuthUser | undefined> {
   const sb = getSupabase();
-  if (!sb) return undefined; // shared identity DB required
+  if (!sb) {
+    const companyId = mem.codeToId.get(companyCode);
+    if (!companyId) return undefined;
+    const row = mem.users.find(
+      (u) => u.company_id === companyId && u.email === email.toLowerCase(),
+    );
+    if (!row || !row.password_hash || row.status !== "active") return undefined;
+    if (!verifyPassword(password, row.password_hash)) return undefined;
+    return rowToUser(row);
+  }
   const { data: company } = await sb
     .from("companies")
     .select("id")
@@ -120,7 +179,7 @@ export async function createSession(user: AuthUser): Promise<{ token: string; ex
       expires_at: expiresAt.toISOString(),
     });
   } else {
-    sessions.set(hashToken(token), {
+    mem.sessions.set(hashToken(token), {
       userId: user.id,
       companyId: user.companyId,
       expiresAt: expiresAt.getTime(),
@@ -134,9 +193,12 @@ export async function getSessionUser(
 ): Promise<{ user: AuthUser; company: Company } | undefined> {
   const sb = getSupabase();
   if (!sb) {
-    const s = sessions.get(hashToken(token));
+    const s = mem.sessions.get(hashToken(token));
     if (!s || s.expiresAt < Date.now()) return undefined;
-    return undefined; // no shared user store in preview
+    const row = mem.users.find((u) => u.id === s.userId);
+    const company = mem.companies.get(s.companyId);
+    if (!row || !company) return undefined;
+    return { user: rowToUser(row), company };
   }
   const { data: s } = await sb
     .from("sessions")
@@ -157,5 +219,5 @@ export async function getSessionUser(
 export async function destroySession(token: string): Promise<void> {
   const sb = getSupabase();
   if (sb) await sb.from("sessions").delete().eq("token_hash", hashToken(token));
-  else sessions.delete(hashToken(token));
+  else mem.sessions.delete(hashToken(token));
 }
