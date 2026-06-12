@@ -17,6 +17,7 @@ const titles: Record<string, string> = {
   "/surgery": "Jadwal Operasi",
   "/diagnostics": "Worklist Lab & Radiologi",
   "/special-care": "Unit Khusus",
+  "/forms": "Form Dinamis",
   "/devices": "Devices",
   "/formulary": "Formulary",
   "/pharmacy": "Dispensing Farmasi",

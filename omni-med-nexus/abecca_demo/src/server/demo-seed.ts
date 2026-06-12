@@ -25,6 +25,7 @@ import {
 import { createIcuAssessment } from "./clinical/icu";
 import { createHdMachine, scheduleHdSession } from "./clinical/hemodialysis";
 import { createChemoCourse, recordChemoCycle } from "./clinical/chemo";
+import { createFormTemplate, createFormSubmission } from "./clinical/forms";
 
 const g = globalThis as unknown as { __abeccaDemoSeeded?: boolean };
 
@@ -147,6 +148,31 @@ export async function ensureDemoSeed(): Promise<void> {
     });
     if (folfox) {
       for (let i = 0; i < 3; i++) await recordChemoCycle(DEMO_COMPANY_ID, folfox.id);
+    }
+
+    // Form builder — a ready-made screening template with one filled submission.
+    const tpl = await createFormTemplate(DEMO_COMPANY_ID, {
+      name: "Skrining Risiko Jatuh (Morse)",
+      category: "Keperawatan",
+      fields: [
+        { label: "Riwayat jatuh", type: "select", options: ["Tidak", "Ya"], required: true },
+        { label: "Diagnosis sekunder", type: "select", options: ["Tidak", "Ya"] },
+        { label: "Skor total", type: "number", unit: "poin", required: true },
+        { label: "Pakai alat bantu jalan", type: "checkbox" },
+        { label: "Catatan", type: "textarea" },
+      ],
+    });
+    if (!("error" in tpl)) {
+      await createFormSubmission(DEMO_COMPANY_ID, tpl.id, {
+        patientId: PATIENTS[0],
+        answers: {
+          "riwayat-jatuh": "Ya",
+          "diagnosis-sekunder": "Ya",
+          "skor-total": "55",
+          "pakai-alat-bantu-jalan": true,
+          catatan: "Risiko tinggi — pasang gelang kuning & edukasi keluarga.",
+        },
+      });
     }
 
     // A couple of outpatient queue tickets for the registration board.

@@ -50,6 +50,9 @@ export type Permission =
   | "hd:manage"
   | "chemo:read"
   | "chemo:manage"
+  | "form:read"
+  | "form:submit"
+  | "form:manage"
   | "ikp:read"
   | "ikp:report"
   | "ikp:manage"
@@ -79,7 +82,7 @@ const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
     "patient:read", "encounter:read", "registration:read", "diagnosis:read",
     "note:read", "discharge:read", "referral:read", "nursing:read", "surgery:read",
     "diet:read", "medication:read", "mar:read", "vitals:read", "bed:read", "diagnostic:read",
-    "icu:read", "hd:read", "chemo:read",
+    "icu:read", "hd:read", "chemo:read", "form:read",
     "ikp:read", "device:read", "formulary:read", "tariff:read", "billing:read",
     "audit:read", "analytics:read", "user:read", "notification:read",
   ],
@@ -91,6 +94,7 @@ const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
     "diet:read", "diet:write", "medication:read", "medication:order",
     "mar:read", "vitals:read", "bed:read", "bed:manage", "diagnostic:read",
     "diagnostic:order", "icu:read", "hd:read", "hd:manage", "chemo:read",
+    "form:read", "form:submit", "form:manage",
     "ikp:read", "ikp:report", "ikp:manage", "device:read",
     "device:write", "formulary:read", "tariff:read", "tariff:manage", "billing:read",
     "audit:read", "analytics:read", "user:read", "notification:read",
@@ -104,6 +108,7 @@ const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
     "mar:read", "mar:administer", "vitals:read", "vitals:record", "bed:read",
     "bed:manage", "diagnostic:read", "diagnostic:order",
     "icu:read", "icu:assess", "hd:read", "hd:manage", "chemo:read",
+    "form:read", "form:submit",
     "ikp:read", "ikp:report",
     "device:read", "formulary:read", "tariff:read", "notification:read",
   ],
@@ -111,7 +116,7 @@ const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
     "patient:read", "encounter:read", "registration:read", "registration:write",
     "note:read", "discharge:read", "referral:read", "nursing:read", "surgery:read",
     "diet:read", "medication:read", "mar:read", "vitals:read", "bed:read", "diagnostic:read",
-    "icu:read", "hd:read", "chemo:read",
+    "icu:read", "hd:read", "chemo:read", "form:read", "form:submit",
     "ikp:read", "ikp:report", "tariff:read", "billing:read", "notification:read",
   ],
 };
