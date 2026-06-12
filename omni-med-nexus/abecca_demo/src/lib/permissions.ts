@@ -43,6 +43,7 @@ export type Permission =
   | "diagnostic:read"
   | "diagnostic:order"
   | "diagnostic:result"
+  | "diagnostic:verify"
   | "ikp:read"
   | "ikp:report"
   | "ikp:manage"
@@ -112,14 +113,15 @@ const SUBROLE_OVERRIDES: Record<string, Permission[]> = {
   "perawat-primer": ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "nursing:read", "nursing:write", "bed:read", "bed:manage"],
   "perawat-spesialis": ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "nursing:read", "nursing:write", "bed:read", "bed:manage"],
   bidan: ["note:read", "note:write", "mar:read", "mar:administer", "vitals:read", "vitals:record", "nursing:read", "nursing:write", "bed:read", "bed:manage"],
-  // Laboratory & radiology — fulfil and result diagnostic orders.
+  // Laboratory & radiology — analysts/radiographers collect & result; the
+  // pathologists/radiologists/heads also validate (diagnostic:verify).
   "analis-lab-atlm": ["diagnostic:read", "diagnostic:result"],
-  "sp-patologi-klinik": ["diagnostic:read", "diagnostic:result"],
-  "sp-patologi-anatomi": ["diagnostic:read", "diagnostic:result"],
-  "ka-laboratorium": ["diagnostic:read", "diagnostic:result"],
+  "sp-patologi-klinik": ["diagnostic:read", "diagnostic:result", "diagnostic:verify"],
+  "sp-patologi-anatomi": ["diagnostic:read", "diagnostic:result", "diagnostic:verify"],
+  "ka-laboratorium": ["diagnostic:read", "diagnostic:result", "diagnostic:verify"],
   radiografer: ["diagnostic:read", "diagnostic:result"],
-  "sp-radiologi": ["diagnostic:read", "diagnostic:result"],
-  "ka-radiologi": ["diagnostic:read", "diagnostic:result"],
+  "sp-radiologi": ["diagnostic:read", "diagnostic:result", "diagnostic:verify"],
+  "ka-radiologi": ["diagnostic:read", "diagnostic:result", "diagnostic:verify"],
   // Pharmacy — pharmacists review medication orders and dispense.
   apoteker: ["formulary:read", "formulary:dispense", "medication:read"],
   ttk: ["formulary:read", "formulary:dispense", "medication:read"],

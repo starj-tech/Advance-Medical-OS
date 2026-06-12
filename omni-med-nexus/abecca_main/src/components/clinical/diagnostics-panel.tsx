@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { FlaskConical, Plus } from "lucide-react";
-import type { DiagnosticCategory } from "@/lib/diagnostic-catalog";
+import type { DiagnosticCategory, ResultFlag } from "@/lib/diagnostic-catalog";
 import { DIAGNOSTIC_CATALOG } from "@/lib/diagnostic-catalog";
 import type { DiagnosticOrder, DiagnosticStatus } from "@/server/clinical/diagnostic-orders";
 import { formatDate } from "@/lib/utils";
@@ -28,6 +28,12 @@ const STATUS_VARIANT: Record<DiagnosticStatus, "muted" | "info" | "warning" | "s
   resulted: "info",
   verified: "success",
   cancelled: "danger",
+};
+const FLAG_LABEL: Record<Exclude<ResultFlag, "unknown">, string> = {
+  normal: "Normal", abnormal: "Abnormal", critical: "Kritis",
+};
+const FLAG_VARIANT: Record<Exclude<ResultFlag, "unknown">, "success" | "warning" | "danger"> = {
+  normal: "success", abnormal: "warning", critical: "danger",
 };
 const STATUSES = Object.keys(STATUS_LABEL) as DiagnosticStatus[];
 const PRIORITIES = ["routine", "urgent", "stat"] as const;
@@ -115,6 +121,12 @@ export function DiagnosticsPanel({ encounterId, active }: { encounterId: string;
                   </Badge>
                 )}
                 <Badge variant={STATUS_VARIANT[o.status]}>{STATUS_LABEL[o.status]}</Badge>
+                {o.resultFlag && o.resultFlag !== "unknown" && (
+                  <Badge variant={FLAG_VARIANT[o.resultFlag]}>{FLAG_LABEL[o.resultFlag]}</Badge>
+                )}
+                {o.accession && (
+                  <span className="font-mono text-[11px] text-muted-foreground">{o.accession}</span>
+                )}
                 <span className="ml-auto text-[11px] text-muted-foreground">{formatDate(o.orderedAt)}</span>
               </div>
               {o.resultValue && (

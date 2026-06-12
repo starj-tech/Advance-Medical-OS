@@ -16,6 +16,11 @@ import {
 } from "./clinical/encounters";
 import { createBed, createWard, listWards, setBedStatus } from "./facility/beds";
 import { createTicket } from "./registration/queue";
+import {
+  collectSpecimen,
+  createDiagnosticOrder,
+  setDiagnosticResult,
+} from "./clinical/diagnostic-orders";
 
 const g = globalThis as unknown as { __abeccaDemoSeeded?: boolean };
 
@@ -59,17 +64,36 @@ export async function ensureDemoSeed(): Promise<void> {
 
     // Encounters + a primary diagnosis each; finish about half so the analytics
     // by-status mix isn't all "in progress".
+    let firstEnc: { id: string; patientId: string } | null = null;
     for (let i = 0; i < DX.length; i++) {
       const e = await createEncounter(DEMO_COMPANY_ID, {
         patientId: PATIENTS[i % PATIENTS.length],
         type: TYPES[i],
       });
+      if (i === 0) firstEnc = { id: e.id, patientId: e.patientId };
       await addDiagnosis(DEMO_COMPANY_ID, e.id, {
         code: DX[i][0],
         description: DX[i][1],
         rank: "primary",
       });
       if (i % 2 === 0) await setEncounterStatus(DEMO_COMPANY_ID, e.id, "finished");
+    }
+
+    // Diagnostics worklist across the LIS lifecycle: one critical resulted (await
+    // validation), one collected (await result), one freshly ordered.
+    if (firstEnc) {
+      const crit = await createDiagnosticOrder(DEMO_COMPANY_ID, firstEnc.id, firstEnc.patientId, {
+        category: "lab", testCode: "GDS", testName: "Gula Darah Sewaktu", priority: "stat",
+      });
+      await collectSpecimen(DEMO_COMPANY_ID, crit.id, {});
+      await setDiagnosticResult(DEMO_COMPANY_ID, crit.id, { value: "450" }); // → critical
+      const hb = await createDiagnosticOrder(DEMO_COMPANY_ID, firstEnc.id, firstEnc.patientId, {
+        category: "lab", testCode: "HB", testName: "Hemoglobin",
+      });
+      await collectSpecimen(DEMO_COMPANY_ID, hb.id, {});
+      await createDiagnosticOrder(DEMO_COMPANY_ID, firstEnc.id, firstEnc.patientId, {
+        category: "radiology", testCode: "XRTHX", testName: "Rontgen Thorax PA", priority: "urgent",
+      });
     }
 
     // A couple of outpatient queue tickets for the registration board.
