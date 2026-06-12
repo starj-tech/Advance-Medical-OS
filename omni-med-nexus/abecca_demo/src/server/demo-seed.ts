@@ -26,6 +26,21 @@ import { createIcuAssessment } from "./clinical/icu";
 import { createHdMachine, scheduleHdSession } from "./clinical/hemodialysis";
 import { createChemoCourse, recordChemoCycle } from "./clinical/chemo";
 import { createFormTemplate, createFormSubmission } from "./clinical/forms";
+import { createImagingStudy } from "./clinical/imaging";
+
+/** A tiny self-contained "film" frame as an SVG data URI (no binary assets). */
+function mockFilm(tag: string): string {
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='420' height='420'>` +
+    `<rect width='420' height='420' fill='#0a0a0a'/>` +
+    `<ellipse cx='150' cy='220' rx='78' ry='128' fill='#363636'/>` +
+    `<ellipse cx='272' cy='220' rx='78' ry='128' fill='#363636'/>` +
+    `<rect x='200' y='80' width='22' height='280' rx='6' fill='#8a8a8a'/>` +
+    `<path d='M120 120 Q211 70 302 120' stroke='#9a9a9a' stroke-width='10' fill='none'/>` +
+    `<text x='14' y='34' fill='#7fb3d5' font-family='monospace' font-size='18'>${tag}</text>` +
+    `</svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
 
 const g = globalThis as unknown as { __abeccaDemoSeeded?: boolean };
 
@@ -109,6 +124,15 @@ export async function ensureDemoSeed(): Promise<void> {
       });
       await createDiagnosticOrder(DEMO_COMPANY_ID, firstEnc.id, firstEnc.patientId, {
         category: "radiology", testCode: "CTHEAD", testName: "CT Scan Kepala",
+      });
+      // PACS-lite: a viewable study (two synthetic frames) for the read X-ray.
+      await createImagingStudy(DEMO_COMPANY_ID, {
+        orderId: xr.id,
+        patientId: firstEnc.patientId,
+        accession: xr.accession,
+        modality: "X-Ray",
+        description: "Rontgen Thorax PA/Lateral",
+        images: [{ url: mockFilm("PA · 0001"), label: "PA" }, { url: mockFilm("LAT · 0002"), label: "Lateral" }],
       });
     }
 
