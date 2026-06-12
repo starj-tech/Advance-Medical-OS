@@ -21,6 +21,7 @@ import {
   hashToken,
 } from "./codes";
 import { isValidSubRole, tierOfSubRole, type RoleTier } from "@/lib/rbac";
+import { generateTotpSecret, verifyTotp } from "@/lib/totp";
 
 export type Plan = "starter" | "professional" | "enterprise";
 
@@ -44,6 +45,8 @@ export interface AuthUser {
   subRole: string;
   isCompanyAdmin: boolean;
   status: string;
+  /** Whether a TOTP second factor is enrolled and active. */
+  mfaEnabled: boolean;
 }
 
 export interface RegisterInput {
@@ -108,6 +111,8 @@ type Row = {
   status: string;
   invite_token_hash: string | null;
   invite_expires_at: string | null;
+  mfa_secret: string | null;
+  mfa_enabled: boolean;
 };
 
 type Mem = {
@@ -167,6 +172,8 @@ function seedDemo(): void {
       status: "active",
       invite_token_hash: null,
       invite_expires_at: null,
+      mfa_secret: null,
+      mfa_enabled: false,
     });
   }
 }
@@ -182,6 +189,7 @@ function rowToUser(r: Row): AuthUser {
     subRole: r.sub_role,
     isCompanyAdmin: r.is_company_admin,
     status: r.status,
+    mfaEnabled: !!r.mfa_enabled,
   };
 }
 
@@ -233,6 +241,8 @@ const memory = {
       status: "active",
       invite_token_hash: null,
       invite_expires_at: null,
+      mfa_secret: null,
+      mfa_enabled: false,
     });
 
     const invites: InviteHandle[] = [];
@@ -251,6 +261,8 @@ const memory = {
         status: "invited",
         invite_token_hash: hashToken(token),
         invite_expires_at: inviteExpiry,
+        mfa_secret: null,
+        mfa_enabled: false,
       });
       invites.push({ email: e.email.toLowerCase(), fullName: e.fullName, token });
     }
@@ -529,4 +541,105 @@ export async function getSessionUser(
 export async function destroySession(token: string): Promise<void> {
   const sb = getSupabase();
   return sb ? supa.deleteSession(sb, token) : memory.deleteSession(token);
+}
+
+/* ============================== MFA (TOTP) ================================ */
+// Enrollment is two-step: `startMfaEnrollment` stores a fresh secret but leaves
+// it inactive; `confirmMfaEnrollment` only flips it on once the user proves they
+// can produce a valid code. The secret never leaves the server except as the
+// one-time provisioning payload returned by startMfaEnrollment.
+
+type MfaState = { secret: string | null; enabled: boolean };
+
+async function readMfa(companyId: string, userId: string): Promise<MfaState | undefined> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("users")
+      .select("mfa_secret, mfa_enabled")
+      .eq("company_id", companyId)
+      .eq("id", userId)
+      .maybeSingle();
+    if (!data) return undefined;
+    return { secret: data.mfa_secret ?? null, enabled: !!data.mfa_enabled };
+  }
+  const row = mem.users.find((u) => u.company_id === companyId && u.id === userId);
+  if (!row) return undefined;
+  return { secret: row.mfa_secret, enabled: row.mfa_enabled };
+}
+
+async function writeMfa(
+  companyId: string,
+  userId: string,
+  patch: Partial<MfaState>,
+): Promise<void> {
+  const sb = getSupabase();
+  if (sb) {
+    const update: Record<string, unknown> = {};
+    if (patch.secret !== undefined) update.mfa_secret = patch.secret;
+    if (patch.enabled !== undefined) update.mfa_enabled = patch.enabled;
+    await sb.from("users").update(update).eq("company_id", companyId).eq("id", userId);
+    return;
+  }
+  const row = mem.users.find((u) => u.company_id === companyId && u.id === userId);
+  if (!row) return;
+  if (patch.secret !== undefined) row.mfa_secret = patch.secret;
+  if (patch.enabled !== undefined) row.mfa_enabled = patch.enabled;
+}
+
+export async function getMfaStatus(
+  companyId: string,
+  userId: string,
+): Promise<{ enabled: boolean; pending: boolean }> {
+  const m = await readMfa(companyId, userId);
+  return { enabled: !!m?.enabled, pending: !!m && !m.enabled && !!m.secret };
+}
+
+/** Begin enrollment: store a fresh (inactive) secret and return it once. */
+export async function startMfaEnrollment(
+  companyId: string,
+  userId: string,
+): Promise<string | undefined> {
+  const m = await readMfa(companyId, userId);
+  if (!m) return undefined;
+  const secret = generateTotpSecret();
+  await writeMfa(companyId, userId, { secret, enabled: false });
+  return secret;
+}
+
+/** Activate MFA only if the supplied code matches the pending secret. */
+export async function confirmMfaEnrollment(
+  companyId: string,
+  userId: string,
+  code: string,
+): Promise<boolean> {
+  const m = await readMfa(companyId, userId);
+  if (!m?.secret || m.enabled) return false;
+  if (!verifyTotp(m.secret, code)) return false;
+  await writeMfa(companyId, userId, { enabled: true });
+  return true;
+}
+
+/** Turn MFA off, requiring a valid current code; clears the secret. */
+export async function disableMfa(
+  companyId: string,
+  userId: string,
+  code: string,
+): Promise<boolean> {
+  const m = await readMfa(companyId, userId);
+  if (!m?.enabled || !m.secret) return false;
+  if (!verifyTotp(m.secret, code)) return false;
+  await writeMfa(companyId, userId, { secret: null, enabled: false });
+  return true;
+}
+
+/** Login step-two: verify a code against the active secret. */
+export async function verifyMfaCode(
+  companyId: string,
+  userId: string,
+  code: string,
+): Promise<boolean> {
+  const m = await readMfa(companyId, userId);
+  if (!m?.enabled || !m.secret) return false;
+  return verifyTotp(m.secret, code);
 }

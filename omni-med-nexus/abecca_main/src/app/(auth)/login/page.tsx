@@ -22,6 +22,8 @@ export default function LoginPage() {
   const [companyCode, setCompanyCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -29,6 +31,8 @@ export default function LoginPage() {
     setCompanyCode(DEMO_COMPANY);
     setEmail(demoEmail);
     setPassword(DEMO_PASSWORD);
+    setMfaRequired(false);
+    setCode("");
     setError(null);
   };
 
@@ -40,10 +44,22 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ companyCode: companyCode.trim(), email: email.trim(), password }),
+        body: JSON.stringify({
+          companyCode: companyCode.trim(),
+          email: email.trim(),
+          password,
+          ...(mfaRequired ? { code: code.trim() } : {}),
+        }),
       });
+      const j = await res.json().catch(() => ({}));
+      if (res.ok && j?.mfaRequired) {
+        // Password accepted; ask for the second factor and stop here.
+        setMfaRequired(true);
+        setError(null);
+        return;
+      }
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
+        if (j?.mfaRequired) setMfaRequired(true);
         setError(j.error ?? "Login gagal. Periksa kembali kredensial Anda.");
         return;
       }
@@ -102,6 +118,27 @@ export default function LoginPage() {
           />
         </label>
 
+        {mfaRequired && (
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-muted-foreground">
+              Kode autentikasi (2FA)
+            </span>
+            <input
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="123456"
+              className={`${inputCls} text-center font-mono text-lg tracking-[0.4em]`}
+              autoFocus
+              required
+            />
+            <span className="text-[11px] text-muted-foreground">
+              Masukkan 6 digit dari aplikasi authenticator Anda.
+            </span>
+          </label>
+        )}
+
         {error && (
           <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
             {error}
@@ -109,7 +146,7 @@ export default function LoginPage() {
         )}
 
         <Button type="submit" disabled={loading} className="mt-1 w-full">
-          {loading ? "Memproses…" : "Masuk"}
+          {loading ? "Memproses…" : mfaRequired ? "Verifikasi & Masuk" : "Masuk"}
         </Button>
       </form>
 

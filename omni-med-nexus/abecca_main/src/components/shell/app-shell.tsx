@@ -23,6 +23,7 @@ const titles: Record<string, string> = {
   "/tariffs": "Tariffs",
   "/safety": "Keselamatan Pasien",
   "/audit": "Audit Trail",
+  "/security": "Keamanan Akun",
 };
 
 function titleFor(pathname: string): string {

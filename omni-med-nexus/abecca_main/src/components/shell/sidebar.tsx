@@ -10,6 +10,7 @@ import {
   ClipboardList,
   FlaskConical,
   HeartPulse,
+  KeyRound,
   LayoutDashboard,
   PackageCheck,
   Pill,
@@ -40,6 +41,7 @@ const nav = [
   { href: "/tariffs", label: "Tariffs", icon: Receipt },
   { href: "/safety", label: "Keselamatan", icon: ShieldAlert },
   { href: "/audit", label: "Audit Trail", icon: ShieldCheck },
+  { href: "/security", label: "Keamanan Akun", icon: KeyRound },
 ];
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
