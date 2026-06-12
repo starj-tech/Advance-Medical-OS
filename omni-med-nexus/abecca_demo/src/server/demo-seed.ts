@@ -22,6 +22,9 @@ import {
   setDiagnosticResult,
   setRadiologyReport,
 } from "./clinical/diagnostic-orders";
+import { createIcuAssessment } from "./clinical/icu";
+import { createHdMachine, scheduleHdSession } from "./clinical/hemodialysis";
+import { createChemoCourse, recordChemoCycle } from "./clinical/chemo";
 
 const g = globalThis as unknown as { __abeccaDemoSeeded?: boolean };
 
@@ -106,6 +109,44 @@ export async function ensureDemoSeed(): Promise<void> {
       await createDiagnosticOrder(DEMO_COMPANY_ID, firstEnc.id, firstEnc.patientId, {
         category: "radiology", testCode: "CTHEAD", testName: "CT Scan Kepala",
       });
+    }
+
+    // Unit khusus — one critical + one moderate APACHE II on the ICU board,
+    // an HD machine pair with today's slots, and a mid-course chemo regimen.
+    await createIcuAssessment(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[4],
+      inputs: {
+        temperatureC: 39.8, meanArterialPressure: 48, heartRate: 145, respiratoryRate: 38,
+        pao2: 52, arterialPh: 7.18, sodium: 156, potassium: 6.1, creatinineMgDl: 2.4,
+        acuteRenalFailure: true, hematocrit: 24, wbc: 21, gcs: 6, age: 76,
+        chronicHealth: "nonop_or_emergency_postop",
+      },
+    });
+    await createIcuAssessment(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[2],
+      inputs: {
+        temperatureC: 38.7, meanArterialPressure: 65, heartRate: 115, respiratoryRate: 28,
+        pao2: 68, arterialPh: 7.3, sodium: 148, potassium: 3.2, creatinineMgDl: 1.6,
+        acuteRenalFailure: false, hematocrit: 33, wbc: 13, gcs: 13, age: 68,
+        chronicHealth: "none",
+      },
+    });
+    const hd1 = await createHdMachine(DEMO_COMPANY_ID, "HD-01");
+    const hd2 = await createHdMachine(DEMO_COMPANY_ID, "HD-02");
+    const todayDate = new Date().toISOString().slice(0, 10);
+    await scheduleHdSession(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[0], machineId: hd1.id, machineName: hd1.name,
+      date: todayDate, shift: "pagi",
+    });
+    await scheduleHdSession(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[5], machineId: hd2.id, machineName: hd2.name,
+      date: todayDate, shift: "siang",
+    });
+    const folfox = await createChemoCourse(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[3], regimenCode: "FOLFOX",
+    });
+    if (folfox) {
+      for (let i = 0; i < 3; i++) await recordChemoCycle(DEMO_COMPANY_ID, folfox.id);
     }
 
     // A couple of outpatient queue tickets for the registration board.
