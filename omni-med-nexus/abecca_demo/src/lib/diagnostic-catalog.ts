@@ -9,6 +9,13 @@ export type DiagnosticCategory = "lab" | "radiology";
 
 export type ResultFlag = "normal" | "abnormal" | "critical" | "unknown";
 
+/** Imaging modality — drives the RIS modality worklist (DICOM MWL concept). */
+export type Modality = "X-Ray" | "CT" | "MRI" | "USG" | "Fluoroskopi" | "Mammografi";
+
+export const MODALITIES: Modality[] = [
+  "X-Ray", "CT", "MRI", "USG", "Fluoroskopi", "Mammografi",
+];
+
 export interface DiagnosticTest {
   code: string;
   name: string;
@@ -23,6 +30,8 @@ export interface DiagnosticTest {
   /** Critical thresholds (panic values). At/beyond → critical. */
   critLow?: number;
   critHigh?: number;
+  /** Imaging modality (radiology) — groups studies into modality worklists. */
+  modality?: Modality;
 }
 
 export const DIAGNOSTIC_CATALOG: DiagnosticTest[] = [
@@ -44,13 +53,17 @@ export const DIAGNOSTIC_CATALOG: DiagnosticTest[] = [
   { code: "HB", name: "Hemoglobin", category: "lab", unit: "g/dL", specimen: "Darah EDTA", refLow: 12, refHigh: 16, critLow: 7, critHigh: 20 },
   { code: "LEUKO", name: "Leukosit", category: "lab", unit: "10³/µL", specimen: "Darah EDTA", refLow: 4, refHigh: 11, critLow: 1, critHigh: 30 },
   { code: "TROMB", name: "Trombosit", category: "lab", unit: "10³/µL", specimen: "Darah EDTA", refLow: 150, refHigh: 400, critLow: 50, critHigh: 1000 },
-  // Radiology
-  { code: "XRTHX", name: "Rontgen Thorax PA", category: "radiology" },
-  { code: "XRABD", name: "Rontgen Abdomen 3 Posisi", category: "radiology" },
-  { code: "USGABD", name: "USG Abdomen", category: "radiology" },
-  { code: "CTHEAD", name: "CT Scan Kepala", category: "radiology" },
-  { code: "CTTHX", name: "CT Scan Thorax", category: "radiology" },
-  { code: "MRIHEAD", name: "MRI Kepala", category: "radiology" },
+  // Radiology — each carries a modality so the RIS can build per-modality worklists.
+  { code: "XRTHX", name: "Rontgen Thorax PA", category: "radiology", modality: "X-Ray" },
+  { code: "XRABD", name: "Rontgen Abdomen 3 Posisi", category: "radiology", modality: "X-Ray" },
+  { code: "XRBNO", name: "Rontgen BNO-IVP", category: "radiology", modality: "X-Ray" },
+  { code: "USGABD", name: "USG Abdomen", category: "radiology", modality: "USG" },
+  { code: "USGOBS", name: "USG Obstetri", category: "radiology", modality: "USG" },
+  { code: "CTHEAD", name: "CT Scan Kepala", category: "radiology", modality: "CT" },
+  { code: "CTTHX", name: "CT Scan Thorax", category: "radiology", modality: "CT" },
+  { code: "MRIHEAD", name: "MRI Kepala", category: "radiology", modality: "MRI" },
+  { code: "MRILUMBAL", name: "MRI Lumbal", category: "radiology", modality: "MRI" },
+  { code: "MAMMO", name: "Mammografi", category: "radiology", modality: "Mammografi" },
 ];
 
 export const findTest = (code: string): DiagnosticTest | undefined =>

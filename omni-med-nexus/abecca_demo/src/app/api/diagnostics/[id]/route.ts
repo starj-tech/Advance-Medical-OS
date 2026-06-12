@@ -5,6 +5,7 @@ import {
   collectSpecimen,
   getDiagnosticOrder,
   setDiagnosticResult,
+  setRadiologyReport,
   verifyDiagnostic,
 } from "@/server/clinical/diagnostic-orders";
 import { notify } from "@/server/notify/center";
@@ -17,12 +18,14 @@ const str = (v: unknown): string | null => {
   return s.length ? s : null;
 };
 
-// Worklist actions and the permission each requires. Collecting the specimen and
-// entering a result are lab-bench work (diagnostic:result); validating is the
-// pathologist's/head's authority (diagnostic:verify).
+// Worklist actions and the permission each requires. Collecting the specimen,
+// entering a lab result and writing a radiology report are bench/reading work
+// (diagnostic:result); validating is the pathologist's/radiologist's/head's
+// authority (diagnostic:verify).
 const PERM: Record<string, Permission> = {
   collect: "diagnostic:result",
   result: "diagnostic:result",
+  report: "diagnostic:result",
   verify: "diagnostic:verify",
 };
 
@@ -49,6 +52,31 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json(
       await verifyDiagnostic(companyId, id, { verifiedBy: guard.session.user.id }),
     );
+  }
+
+  if (action === "report") {
+    const impression = str(body?.impression);
+    if (!impression) {
+      return NextResponse.json({ error: "impression is required" }, { status: 400 });
+    }
+    const order = await setRadiologyReport(companyId, id, {
+      findings: str(body?.findings) ?? "",
+      impression,
+      recommendation: str(body?.recommendation),
+      resultedBy: guard.session.user.id,
+    });
+    // Tell the DPJP the radiology read is ready.
+    const encounter = await getEncounter(companyId, existing.encounterId);
+    if (encounter?.dpjpUserId) {
+      await notify({
+        companyId,
+        userId: encounter.dpjpUserId,
+        title: "Hasil radiologi siap",
+        body: `${existing.testName} — Kesan: ${impression} (pasien ${existing.patientId})`,
+        type: "clinical",
+      });
+    }
+    return NextResponse.json(order);
   }
 
   // action === "result"

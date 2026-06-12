@@ -20,6 +20,7 @@ import {
   collectSpecimen,
   createDiagnosticOrder,
   setDiagnosticResult,
+  setRadiologyReport,
 } from "./clinical/diagnostic-orders";
 
 const g = globalThis as unknown as { __abeccaDemoSeeded?: boolean };
@@ -91,8 +92,19 @@ export async function ensureDemoSeed(): Promise<void> {
         category: "lab", testCode: "HB", testName: "Hemoglobin",
       });
       await collectSpecimen(DEMO_COMPANY_ID, hb.id, {});
-      await createDiagnosticOrder(DEMO_COMPANY_ID, firstEnc.id, firstEnc.patientId, {
+      // Radiology (RIS): one study already read & awaiting a radiologist's
+      // validation, plus a fresh CT order — shows the reporting lifecycle.
+      const xr = await createDiagnosticOrder(DEMO_COMPANY_ID, firstEnc.id, firstEnc.patientId, {
         category: "radiology", testCode: "XRTHX", testName: "Rontgen Thorax PA", priority: "urgent",
+      });
+      await collectSpecimen(DEMO_COMPANY_ID, xr.id, {});
+      await setRadiologyReport(DEMO_COMPANY_ID, xr.id, {
+        findings: "Corakan bronkovaskular normal. Tak tampak infiltrat maupun efusi pleura.",
+        impression: "Foto thorax dalam batas normal.",
+        recommendation: "Tidak diperlukan tindak lanjut radiologis.",
+      });
+      await createDiagnosticOrder(DEMO_COMPANY_ID, firstEnc.id, firstEnc.patientId, {
+        category: "radiology", testCode: "CTHEAD", testName: "CT Scan Kepala",
       });
     }
 

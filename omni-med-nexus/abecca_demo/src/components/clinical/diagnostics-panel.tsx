@@ -114,6 +114,7 @@ export function DiagnosticsPanel({ encounterId, active }: { encounterId: string;
                 <Badge variant={o.category === "lab" ? "info" : "muted"}>
                   {o.category === "lab" ? "Lab" : "Radiologi"}
                 </Badge>
+                {o.modality && <Badge variant="muted">{o.modality}</Badge>}
                 <span className="font-medium">{o.testName}</span>
                 {o.priority !== "routine" && (
                   <Badge variant={o.priority === "stat" ? "danger" : "warning"}>
@@ -129,11 +130,23 @@ export function DiagnosticsPanel({ encounterId, active }: { encounterId: string;
                 )}
                 <span className="ml-auto text-[11px] text-muted-foreground">{formatDate(o.orderedAt)}</span>
               </div>
-              {o.resultValue && (
-                <p className="mt-1 text-xs">
-                  <span className="font-semibold">Hasil:</span> {o.resultValue}
-                  {o.resultNote ? ` — ${o.resultNote}` : ""}
-                </p>
+              {o.reportImpression ? (
+                <div className="mt-1 space-y-0.5 text-xs">
+                  {o.reportFindings && (
+                    <p><span className="font-semibold">Temuan:</span> {o.reportFindings}</p>
+                  )}
+                  <p><span className="font-semibold">Kesan:</span> {o.reportImpression}</p>
+                  {o.reportRecommendation && (
+                    <p><span className="font-semibold">Saran:</span> {o.reportRecommendation}</p>
+                  )}
+                </div>
+              ) : (
+                o.resultValue && (
+                  <p className="mt-1 text-xs">
+                    <span className="font-semibold">Hasil:</span> {o.resultValue}
+                    {o.resultNote ? ` — ${o.resultNote}` : ""}
+                  </p>
+                )
               )}
               {active && o.status !== "cancelled" && o.status !== "verified" && (
                 <Can permission="diagnostic:result">

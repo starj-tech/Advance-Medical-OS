@@ -40,6 +40,11 @@ export interface DiagnosticOrder {
   resultValue: string | null;
   resultNote: string | null;
   resultFlag: ResultFlag | null;
+  /** Radiology (RIS): imaging modality + structured report sections. */
+  modality: string | null;
+  reportFindings: string | null;
+  reportImpression: string | null;
+  reportRecommendation: string | null;
   orderedBy: string | null;
   resultedBy: string | null;
   verifiedBy: string | null;
@@ -65,6 +70,8 @@ type Row = {
   priority: DiagnosticPriority; status: DiagnosticStatus;
   accession: string | null; collected_by: string | null; collected_at: string | null;
   result_value: string | null; result_note: string | null; result_flag: ResultFlag | null;
+  modality: string | null; report_findings: string | null;
+  report_impression: string | null; report_recommendation: string | null;
   ordered_by: string | null; resulted_by: string | null; verified_by: string | null;
   ordered_at: string; resulted_at: string | null; verified_at: string | null;
 };
@@ -73,6 +80,8 @@ const toOrder = (r: Row): DiagnosticOrder => ({
   category: r.category, testCode: r.test_code, testName: r.test_name, priority: r.priority,
   status: r.status, accession: r.accession, collectedBy: r.collected_by, collectedAt: r.collected_at,
   resultValue: r.result_value, resultNote: r.result_note, resultFlag: r.result_flag,
+  modality: r.modality, reportFindings: r.report_findings,
+  reportImpression: r.report_impression, reportRecommendation: r.report_recommendation,
   orderedBy: r.ordered_by, resultedBy: r.resulted_by, verifiedBy: r.verified_by,
   orderedAt: r.ordered_at, resultedAt: r.resulted_at, verifiedAt: r.verified_at,
 });
@@ -99,6 +108,10 @@ export async function createDiagnosticOrder(
   patientId: string,
   input: CreateDiagnosticOrderInput,
 ): Promise<DiagnosticOrder> {
+  // Denormalise the imaging modality from the catalogue so the RIS worklist can
+  // group radiology studies without re-reading the catalogue per row.
+  const modality =
+    input.category === "radiology" ? (findTest(input.testCode)?.modality ?? null) : null;
   const sb = getSupabase();
   if (sb) {
     const { data, error } = await sb
@@ -112,6 +125,7 @@ export async function createDiagnosticOrder(
         test_name: input.testName,
         priority: normPriority(input.priority),
         status: "ordered",
+        modality,
         ordered_by: input.orderedBy ?? null,
       })
       .select("*")
@@ -135,6 +149,10 @@ export async function createDiagnosticOrder(
     resultValue: null,
     resultNote: null,
     resultFlag: null,
+    modality,
+    reportFindings: null,
+    reportImpression: null,
+    reportRecommendation: null,
     orderedBy: input.orderedBy ?? null,
     resultedBy: null,
     verifiedBy: null,
@@ -288,7 +306,58 @@ export async function setDiagnosticResult(
   return existing;
 }
 
-/** Validate a result (Sp.PK / Ka. Lab): moves `resulted` → `verified`. */
+/**
+ * Write a structured radiology report (RIS): temuan/findings, kesan/impression,
+ * and an optional saran/recommendation. The impression doubles as the headline
+ * result value shown in the unified result column; the flag stays "unknown"
+ * because radiology is read qualitatively, not graded against numeric ranges.
+ * Moves the study to `resulted` (awaiting a radiologist's validation).
+ */
+export async function setRadiologyReport(
+  companyId: string,
+  id: string,
+  input: {
+    findings: string;
+    impression: string;
+    recommendation?: string | null;
+    resultedBy?: string | null;
+  },
+): Promise<DiagnosticOrder | undefined> {
+  const now = new Date().toISOString();
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("diagnostic_orders")
+      .update({
+        status: "resulted",
+        report_findings: input.findings,
+        report_impression: input.impression,
+        report_recommendation: input.recommendation ?? null,
+        result_value: input.impression,
+        result_flag: "unknown",
+        resulted_by: input.resultedBy ?? null,
+        resulted_at: now,
+      })
+      .eq("company_id", companyId)
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
+    return data ? toOrder(data as Row) : undefined;
+  }
+  const o = mem.find((x) => x.companyId === companyId && x.id === id);
+  if (!o) return undefined;
+  o.status = "resulted";
+  o.reportFindings = input.findings;
+  o.reportImpression = input.impression;
+  o.reportRecommendation = input.recommendation ?? null;
+  o.resultValue = input.impression;
+  o.resultFlag = "unknown";
+  o.resultedBy = input.resultedBy ?? null;
+  o.resultedAt = now;
+  return o;
+}
+
+/** Validate a result (Sp.PK / Ka. Lab / Sp.Rad): moves `resulted` → `verified`. */
 export async function verifyDiagnostic(
   companyId: string,
   id: string,
