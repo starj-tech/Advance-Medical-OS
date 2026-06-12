@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, ListTree, Radio, ServerCog, ShieldAlert, Terminal } from "lucide-react";
+import { Activity, KeyRound, ListTree, Radio, ServerCog, ShieldAlert, Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -11,6 +11,7 @@ const nav = [
   { href: "/fleet", label: "Device Fleet", icon: Radio },
   { href: "/incidents", label: "Incidents", icon: ShieldAlert },
   { href: "/security", label: "Security Posture", icon: ListTree },
+  { href: "/account", label: "Keamanan Akun", icon: KeyRound },
 ];
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {

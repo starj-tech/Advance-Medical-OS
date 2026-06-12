@@ -12,6 +12,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { getSupabase } from "../supabase";
 import { hashPassword, verifyPassword } from "./password";
+import { generateTotpSecret, verifyTotp } from "@/lib/totp";
 
 export type RoleTier = "executive" | "manager" | "doctor" | "staff";
 
@@ -24,6 +25,7 @@ export interface AuthUser {
   subRole: string;
   isCompanyAdmin: boolean;
   status: string;
+  mfaEnabled: boolean;
 }
 
 export interface Company {
@@ -53,6 +55,8 @@ interface UserRow {
   password_hash: string | null;
   is_company_admin: boolean;
   status: string;
+  mfa_secret?: string | null;
+  mfa_enabled?: boolean;
 }
 interface CompanyRow {
   id: string;
@@ -72,6 +76,7 @@ function rowToUser(r: UserRow): AuthUser {
     subRole: r.sub_role,
     isCompanyAdmin: r.is_company_admin,
     status: r.status,
+    mfaEnabled: !!r.mfa_enabled,
   };
 }
 function toCompany(r: CompanyRow): Company {
@@ -129,6 +134,8 @@ function seedDemo(): void {
       password_hash: passwordHash,
       is_company_admin: u.admin,
       status: "active",
+      mfa_secret: null,
+      mfa_enabled: false,
     });
   }
 }
@@ -220,4 +227,96 @@ export async function destroySession(token: string): Promise<void> {
   const sb = getSupabase();
   if (sb) await sb.from("sessions").delete().eq("token_hash", hashToken(token));
   else mem.sessions.delete(hashToken(token));
+}
+
+/* ============================== MFA (TOTP) ================================ */
+// Same TOTP second factor as the main app, on the SHARED users table — enrolling
+// in one app protects login in both. Two-step enrollment: a secret is stored
+// inactive, then flipped on only once a valid code is proven.
+
+type MfaState = { secret: string | null; enabled: boolean };
+
+async function readMfa(companyId: string, userId: string): Promise<MfaState | undefined> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("users")
+      .select("mfa_secret, mfa_enabled")
+      .eq("company_id", companyId)
+      .eq("id", userId)
+      .maybeSingle();
+    if (!data) return undefined;
+    return { secret: data.mfa_secret ?? null, enabled: !!data.mfa_enabled };
+  }
+  const row = mem.users.find((u) => u.company_id === companyId && u.id === userId);
+  if (!row) return undefined;
+  return { secret: row.mfa_secret ?? null, enabled: !!row.mfa_enabled };
+}
+
+async function writeMfa(companyId: string, userId: string, patch: Partial<MfaState>): Promise<void> {
+  const sb = getSupabase();
+  if (sb) {
+    const update: Record<string, unknown> = {};
+    if (patch.secret !== undefined) update.mfa_secret = patch.secret;
+    if (patch.enabled !== undefined) update.mfa_enabled = patch.enabled;
+    await sb.from("users").update(update).eq("company_id", companyId).eq("id", userId);
+    return;
+  }
+  const row = mem.users.find((u) => u.company_id === companyId && u.id === userId);
+  if (!row) return;
+  if (patch.secret !== undefined) row.mfa_secret = patch.secret;
+  if (patch.enabled !== undefined) row.mfa_enabled = patch.enabled;
+}
+
+export async function getMfaStatus(
+  companyId: string,
+  userId: string,
+): Promise<{ enabled: boolean; pending: boolean }> {
+  const m = await readMfa(companyId, userId);
+  return { enabled: !!m?.enabled, pending: !!m && !m.enabled && !!m.secret };
+}
+
+export async function startMfaEnrollment(
+  companyId: string,
+  userId: string,
+): Promise<string | undefined> {
+  const m = await readMfa(companyId, userId);
+  if (!m) return undefined;
+  const secret = generateTotpSecret();
+  await writeMfa(companyId, userId, { secret, enabled: false });
+  return secret;
+}
+
+export async function confirmMfaEnrollment(
+  companyId: string,
+  userId: string,
+  code: string,
+): Promise<boolean> {
+  const m = await readMfa(companyId, userId);
+  if (!m?.secret || m.enabled) return false;
+  if (!verifyTotp(m.secret, code)) return false;
+  await writeMfa(companyId, userId, { enabled: true });
+  return true;
+}
+
+export async function disableMfa(
+  companyId: string,
+  userId: string,
+  code: string,
+): Promise<boolean> {
+  const m = await readMfa(companyId, userId);
+  if (!m?.enabled || !m.secret) return false;
+  if (!verifyTotp(m.secret, code)) return false;
+  await writeMfa(companyId, userId, { secret: null, enabled: false });
+  return true;
+}
+
+export async function verifyMfaCode(
+  companyId: string,
+  userId: string,
+  code: string,
+): Promise<boolean> {
+  const m = await readMfa(companyId, userId);
+  if (!m?.enabled || !m.secret) return false;
+  return verifyTotp(m.secret, code);
 }

@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
-import { authenticate, createSession } from "@/server/auth/store";
+import { authenticate, createSession, verifyMfaCode } from "@/server/auth/store";
 import { setSessionCookie } from "@/server/auth/session";
 
 export const dynamic = "force-dynamic";
 
-/** Login with Company ID (company_code) + email + password (shared identity). */
+/**
+ * Login with Company ID (company_code) + email + password (shared identity).
+ * If the account has a TOTP second factor, step one returns
+ * `{ mfaRequired: true }` (no session); the client re-submits with `code` and
+ * the password is re-verified.
+ */
 export async function POST(request: Request) {
-  const { companyCode, email, password } = await request.json();
+  const { companyCode, email, password, code } = await request.json();
   if (!companyCode || !email || !password) {
     return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
   }
@@ -17,6 +22,18 @@ export async function POST(request: Request) {
       { status: 401 },
     );
   }
+
+  if (user.mfaEnabled) {
+    const otp = typeof code === "string" ? code.trim() : "";
+    if (!otp) return NextResponse.json({ mfaRequired: true });
+    if (!(await verifyMfaCode(user.companyId, user.id, otp))) {
+      return NextResponse.json(
+        { error: "Kode autentikasi (2FA) salah", mfaRequired: true },
+        { status: 401 },
+      );
+    }
+  }
+
   const { token, expiresAt } = await createSession(user);
   await setSessionCookie(token, expiresAt);
   return NextResponse.json({ user });
