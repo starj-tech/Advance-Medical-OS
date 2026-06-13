@@ -6,6 +6,7 @@ import type { Tariff } from "@/lib/types";
 import type { BillSummary, PaymentMethod } from "@/server/billing/charges";
 import type { InacbgClaim } from "@/server/billing/inacbg";
 import type { SepRecord } from "@/server/bpjs/sep";
+import type { RujukanRecord } from "@/server/bpjs/referrals";
 import type { CareClass } from "@/lib/inacbg";
 import { CARE_CLASSES, CARE_CLASS_LABEL } from "@/lib/inacbg";
 import { formatIDR } from "@/lib/utils";
@@ -48,8 +49,11 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
   const [inacbg, setInacbg] = useState<InacbgData | null>(null);
   const [careClass, setCareClass] = useState<CareClass>("3");
   const [sep, setSep] = useState<SepRecord | null>(null);
+  const [rujukan, setRujukan] = useState<RujukanRecord | null>(null);
   const [noKartu, setNoKartu] = useState("");
   const [issuing, setIssuing] = useState(false);
+  const [checkingRujukan, setCheckingRujukan] = useState(false);
+  const [rujukanError, setRujukanError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/encounters/${encounterId}/billing`);
@@ -69,6 +73,14 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
     }
   }, [encounterId]);
 
+  const loadRujukan = useCallback(async () => {
+    const res = await fetch(`/api/encounters/${encounterId}/bpjs-rujukan`);
+    if (res.ok) {
+      const data: { rujukan: RujukanRecord | null } = await res.json();
+      setRujukan(data.rujukan);
+    }
+  }, [encounterId]);
+
   const loadTariffs = useCallback(async () => {
     const res = await fetch("/api/tariffs");
     if (!res.ok) return;
@@ -84,7 +96,8 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
     void loadTariffs();
     void loadInacbg();
     void loadSep();
-  }, [load, loadTariffs, loadInacbg, loadSep]);
+    void loadRujukan();
+  }, [load, loadTariffs, loadInacbg, loadSep, loadRujukan]);
 
   const issueSep = async () => {
     setIssuing(true);
@@ -98,6 +111,23 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
       await loadSep();
     }
     setIssuing(false);
+  };
+
+  const checkRujukan = async () => {
+    setCheckingRujukan(true);
+    setRujukanError(null);
+    const res = await fetch(`/api/encounters/${encounterId}/bpjs-rujukan`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ noKartu }),
+    });
+    if (res.ok) {
+      await loadRujukan();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      setRujukanError(j.error ?? "Gagal cek rujukan");
+    }
+    setCheckingRujukan(false);
   };
 
   const saveClaim = async () => {
@@ -344,6 +374,50 @@ export function BillingPanel({ encounterId }: { encounterId: string }) {
               </div>
             );
           })()}
+
+          <div className="space-y-1.5 border-t border-border pt-2">
+            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <CreditCard className="size-3.5" /> BPJS — Rujukan
+            </span>
+            {rujukan ? (
+              <div className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono font-semibold">{rujukan.noRujukan}</span>
+                  {rujukan.isMock && <Badge variant="muted">mock</Badge>}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {rujukan.asalFaskes}{rujukan.tglRujukan ? ` · ${rujukan.tglRujukan}` : ""} · No. {rujukan.noKartu}
+                </p>
+                {rujukan.diagnosaKode && (
+                  <p className="text-xs text-muted-foreground">
+                    Dx rujukan: {rujukan.diagnosaKode} — {rujukan.diagnosaNama}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <Can permission="billing:manage">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={noKartu}
+                    onChange={(e) => setNoKartu(e.target.value)}
+                    placeholder="No. Kartu BPJS (13 digit)"
+                    inputMode="numeric"
+                    className={`${inputCls} min-w-0 flex-1`}
+                    aria-label="Nomor kartu BPJS untuk rujukan"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={checkRujukan}
+                    disabled={checkingRujukan || !/^\d{10,16}$/.test(noKartu.trim())}
+                  >
+                    Cek Rujukan
+                  </Button>
+                </div>
+              </Can>
+            )}
+            {rujukanError && <p className="text-xs text-danger">{rujukanError}</p>}
+          </div>
 
           <div className="space-y-1.5 border-t border-border pt-2">
             <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

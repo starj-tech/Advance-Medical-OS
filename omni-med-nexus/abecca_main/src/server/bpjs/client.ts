@@ -127,3 +127,57 @@ export async function issueSep(input: {
     : body) as { sep?: { noSep?: string } };
   return { sepNumber: data?.sep?.noSep ?? "", mock: false };
 }
+
+export interface RujukanInfo {
+  /** Empty when the member has no active referral. */
+  noRujukan: string;
+  asalFaskes: string;
+  diagnosaKode: string;
+  diagnosaNama: string;
+  tglRujukan: string;
+  found: boolean;
+  mock: boolean;
+}
+
+/**
+ * Look up a member's active referral (rujukan) from VClaim
+ * (/Rujukan/Peserta/{noKartu}). In mock mode returns a deterministic referral
+ * so the rawat-jalan SEP flow is demonstrable; live mode maps the real payload.
+ */
+export async function checkRujukan(noKartu: string): Promise<RujukanInfo> {
+  const env = readEnv();
+  if (!env) {
+    const seq = String(Math.floor(Date.now() / 1000)).slice(-6);
+    console.log(`[bpjs:mock] checkRujukan no=${noKartu} (BPJS_* unset)`);
+    return {
+      noRujukan: `MOCKRJK${seq}`,
+      asalFaskes: "Puskesmas Mock Sejahtera",
+      diagnosaKode: "J06.9",
+      diagnosaNama: "Infeksi saluran napas atas akut",
+      tglRujukan: new Date().toISOString().slice(0, 10),
+      found: true,
+      mock: true,
+    };
+  }
+  const data = (await vclaimGet(env, `/Rujukan/Peserta/${noKartu}`)) as {
+    rujukan?: {
+      noKunjungan?: string;
+      tglKunjungan?: string;
+      provPerujuk?: { nama?: string };
+      diagnosa?: { kode?: string; nama?: string };
+    };
+  };
+  const r = data?.rujukan;
+  if (!r?.noKunjungan) {
+    return { noRujukan: "", asalFaskes: "", diagnosaKode: "", diagnosaNama: "", tglRujukan: "", found: false, mock: false };
+  }
+  return {
+    noRujukan: r.noKunjungan,
+    asalFaskes: r.provPerujuk?.nama ?? "-",
+    diagnosaKode: r.diagnosa?.kode ?? "-",
+    diagnosaNama: r.diagnosa?.nama ?? "-",
+    tglRujukan: r.tglKunjungan ?? "-",
+    found: true,
+    mock: false,
+  };
+}
