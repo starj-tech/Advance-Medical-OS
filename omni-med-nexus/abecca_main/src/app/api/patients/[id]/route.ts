@@ -4,6 +4,7 @@ import {
   addNote,
   dischargePatient,
   getPatient,
+  recordRecordAccess,
   recordVitals,
   transferPatient,
 } from "@/server/db";
@@ -22,6 +23,8 @@ export async function GET(
   if (!patient) {
     return NextResponse.json({ error: "Patient not found" }, { status: 404 });
   }
+  // PDP/KARS access log: record who viewed whose record on the audit chain.
+  await recordRecordAccess(id, guard.session.user.id);
   return NextResponse.json(patient);
 }
 

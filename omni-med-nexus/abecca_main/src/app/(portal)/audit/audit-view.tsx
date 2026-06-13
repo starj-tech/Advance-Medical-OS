@@ -1,10 +1,12 @@
 "use client";
 
-import { Hash, Link2, ShieldCheck, TriangleAlert } from "lucide-react";
+import { useState } from "react";
+import { Eye, Hash, Link2, ShieldCheck, TriangleAlert } from "lucide-react";
 import type { AuditAction } from "@/lib/types";
 import { useAuditChain, useChainValid } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
 import { cn, formatDateTime, shortHash } from "@/lib/utils";
 
@@ -26,7 +28,11 @@ const actionVariant: Record<
 export function AuditView() {
   const chain = useAuditChain();
   const valid = useChainValid();
-  const ordered = [...chain].reverse(); // newest first
+  const [accessOnly, setAccessOnly] = useState(false);
+  const accessCount = chain.filter((b) => b.action === "VIEW_RECORD").length;
+  const ordered = [...chain]
+    .reverse() // newest first
+    .filter((b) => !accessOnly || b.action === "VIEW_RECORD");
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
@@ -85,9 +91,29 @@ export function AuditView() {
         />
       </section>
 
+      {/* Filter: full ledger vs PDP access log only */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" variant={accessOnly ? "outline" : "primary"} onClick={() => setAccessOnly(false)}>
+          Semua blok
+        </Button>
+        <Button size="sm" variant={accessOnly ? "primary" : "outline"} onClick={() => setAccessOnly(true)}>
+          <Eye className="size-4" /> Akses rekam ({accessCount})
+        </Button>
+        {accessOnly && (
+          <span className="text-xs text-muted-foreground">
+            Log kepatuhan UU PDP — siapa membuka rekam pasien siapa.
+          </span>
+        )}
+      </div>
+
       {/* Ledger */}
       <Card>
         <CardContent className="p-0">
+          {ordered.length === 0 ? (
+            <p className="px-5 py-6 text-center text-sm text-muted-foreground">
+              Belum ada akses rekam tercatat.
+            </p>
+          ) : (
           <ol className="relative">
             {ordered.map((b, i) => {
               const isGenesis = b.index === 0;
@@ -157,6 +183,7 @@ export function AuditView() {
               );
             })}
           </ol>
+          )}
         </CardContent>
       </Card>
     </div>

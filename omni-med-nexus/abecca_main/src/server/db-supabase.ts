@@ -215,6 +215,15 @@ async function appendBlock(
   await sb.from("audit_blocks").insert(blockToRow(block));
 }
 
+/** Record a read access to a patient record on the audit chain (PDP/KARS). */
+export async function recordAccess(
+  sb: SupabaseClient,
+  patientId: string,
+  doctorId: string,
+): Promise<void> {
+  await appendBlock(sb, patientId, "VIEW_RECORD", doctorId);
+}
+
 async function fetchPatient(
   sb: SupabaseClient,
   id: string,

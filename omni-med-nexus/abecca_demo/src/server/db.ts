@@ -258,6 +258,20 @@ export async function getAudit(): Promise<{ chain: AuditBlock[]; valid: boolean 
   return sb ? supa.getAudit(sb) : memory.getAudit();
 }
 
+/**
+ * Record a read access to a patient record on the tamper-evident audit chain —
+ * "who viewed whose record", as required by UU PDP / KARS access logging.
+ * Appends a VIEW_RECORD block attributed to the viewing user (doctorId).
+ */
+export async function recordRecordAccess(
+  patientId: string,
+  doctorId: string,
+): Promise<void> {
+  const sb = getSupabase();
+  if (sb) await supa.recordAccess(sb, patientId, doctorId);
+  else append(patientId, "VIEW_RECORD", doctorId);
+}
+
 export async function recordVitals(
   id: string,
   raw: RawVitals,
