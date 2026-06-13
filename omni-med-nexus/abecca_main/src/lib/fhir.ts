@@ -76,4 +76,82 @@ export function buildVitalsObservation(input: {
   };
 }
 
-export { SNOMED, ICD10, LOINC };
+/** LOINC codes for the vital signs Abecca records (EWS observation set). */
+export const VITAL_LOINC: { key: string; loincCode: string; display: string; unit: string }[] = [
+  { key: "respiratoryRate", loincCode: "9279-1", display: "Respiratory rate", unit: "/min" },
+  { key: "spo2", loincCode: "59408-5", display: "Oxygen saturation (pulse oximetry)", unit: "%" },
+  { key: "temperature", loincCode: "8310-5", display: "Body temperature", unit: "Cel" },
+  { key: "systolicBp", loincCode: "8480-6", display: "Systolic blood pressure", unit: "mm[Hg]" },
+  { key: "pulse", loincCode: "8867-4", display: "Heart rate", unit: "/min" },
+];
+
+const MEDREQ_STATUS: Record<string, string> = {
+  active: "active",
+  held: "on-hold",
+  stopped: "stopped",
+};
+
+/** e-Prescription line (CPOE order) → FHIR MedicationRequest. */
+export function buildMedicationRequest(input: {
+  patientRef: string;
+  encounterRef: string;
+  drugName: string;
+  /** KFA (Kamus Farmasi & Alkes) code when the formulary carries one. */
+  kfaCode?: string | null;
+  dose?: string | null;
+  route?: string | null;
+  frequency?: string | null;
+  status: string;
+  authoredOn: string;
+}): FhirResource {
+  const dosageText = [input.dose, input.route, input.frequency].filter(Boolean).join(" · ");
+  return {
+    resourceType: "MedicationRequest",
+    status: MEDREQ_STATUS[input.status] ?? "active",
+    intent: "order",
+    medicationCodeableConcept: {
+      ...(input.kfaCode
+        ? { coding: [{ system: KFA, code: input.kfaCode, display: input.drugName }] }
+        : {}),
+      text: input.drugName,
+    },
+    subject: { reference: input.patientRef },
+    encounter: { reference: input.encounterRef },
+    authoredOn: input.authoredOn,
+    ...(dosageText ? { dosageInstruction: [{ text: dosageText }] } : {}),
+  };
+}
+
+/** Resulted/verified lab or radiology order → FHIR DiagnosticReport. */
+export function buildDiagnosticReport(input: {
+  patientRef: string;
+  encounterRef: string;
+  category: "lab" | "radiology";
+  testCode: string;
+  testName: string;
+  conclusion: string;
+  effective: string;
+  verified: boolean;
+}): FhirResource {
+  const cat =
+    input.category === "lab"
+      ? { code: "LAB", display: "Laboratory" }
+      : { code: "RAD", display: "Radiology" };
+  return {
+    resourceType: "DiagnosticReport",
+    status: input.verified ? "final" : "preliminary",
+    category: [{ coding: [{ system: "http://terminology.hl7.org/CodeSystem/v2-0074", ...cat }] }],
+    code: {
+      coding: [{ system: "http://sys-ids.kemkes.go.id/diagnostic/abecca", code: input.testCode, display: input.testName }],
+      text: input.testName,
+    },
+    subject: { reference: input.patientRef },
+    encounter: { reference: input.encounterRef },
+    effectiveDateTime: input.effective,
+    conclusion: input.conclusion,
+  };
+}
+
+const KFA = "http://sys-ids.kemkes.go.id/kfa";
+
+export { SNOMED, ICD10, LOINC, KFA };
