@@ -27,6 +27,7 @@ import { createHdMachine, scheduleHdSession } from "./clinical/hemodialysis";
 import { createChemoCourse, recordChemoCycle } from "./clinical/chemo";
 import { createFormTemplate, createFormSubmission } from "./clinical/forms";
 import { createImagingStudy } from "./clinical/imaging";
+import { createTeleSession, setTeleStatus } from "./clinical/telemedicine";
 
 /** A tiny self-contained "film" frame as an SVG data URI (no binary assets). */
 function mockFilm(tag: string): string {
@@ -198,6 +199,20 @@ export async function ensureDemoSeed(): Promise<void> {
         },
       });
     }
+
+    // Telemedicine — one session already in the waiting room (join button live),
+    // one scheduled for later today.
+    const tele = await createTeleSession(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[1],
+      scheduledAt: new Date(Date.now() + 10 * 60_000).toISOString(),
+      note: "Kontrol hipertensi — konsultasi jarak jauh",
+    });
+    await setTeleStatus(DEMO_COMPANY_ID, tele.id, "waiting");
+    await createTeleSession(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[4],
+      scheduledAt: new Date(Date.now() + 3 * 3600_000).toISOString(),
+      note: "Tindak lanjut hasil lab",
+    });
 
     // A couple of outpatient queue tickets for the registration board.
     await createTicket(DEMO_COMPANY_ID, { patientId: PATIENTS[1], polyclinic: "Penyakit Dalam" });

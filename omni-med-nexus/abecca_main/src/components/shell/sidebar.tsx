@@ -21,6 +21,7 @@ import {
   Scissors,
   Sparkles,
   ShieldAlert,
+  Video,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -32,6 +33,7 @@ const nav = [
   { href: "/copilot", label: "Copilot", icon: Sparkles },
   { href: "/registration", label: "Pendaftaran", icon: ClipboardList },
   { href: "/appointments", label: "Janji Temu", icon: CalendarClock },
+  { href: "/telemedicine", label: "Telemedicine", icon: Video },
   { href: "/patients", label: "Patients", icon: Users },
   { href: "/beds", label: "Bed Board", icon: BedDouble },
   { href: "/surgery", label: "Operasi", icon: Scissors },
