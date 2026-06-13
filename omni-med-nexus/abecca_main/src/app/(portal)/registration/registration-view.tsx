@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { BellRing, Send, Ticket, UserPlus } from "lucide-react";
 import type { QueueStatus, QueueTicket } from "@/server/registration/queue";
+import type { AntrolBooking } from "@/server/bpjs/antrol";
 import type { FollowUp } from "@/server/clinical/follow-ups";
 import { POLYCLINICS } from "@/lib/polyclinics";
 import { formatDate } from "@/lib/utils";
@@ -43,11 +44,21 @@ export function RegistrationView() {
   const [busy, setBusy] = useState(false);
   const [due, setDue] = useState<FollowUp[]>([]);
   const [dispatching, setDispatching] = useState(false);
+  const [antrol, setAntrol] = useState<Record<string, AntrolBooking>>({});
+  const [antrolFor, setAntrolFor] = useState<string | null>(null);
+  const [antrolNoKartu, setAntrolNoKartu] = useState("");
+  const [antrolBusy, setAntrolBusy] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/registration/queue");
     setQueue(res.ok ? await res.json() : []);
     setLoading(false);
+  }, []);
+  const loadAntrol = useCallback(async () => {
+    const res = await fetch("/api/registration/antrol");
+    if (!res.ok) return;
+    const list: AntrolBooking[] = await res.json();
+    setAntrol(Object.fromEntries(list.map((b) => [b.ticketId, b])));
   }, []);
   const loadReminders = useCallback(async () => {
     const res = await fetch("/api/reminders");
@@ -57,7 +68,23 @@ export function RegistrationView() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
     void loadReminders();
-  }, [load, loadReminders]);
+    void loadAntrol();
+  }, [load, loadReminders, loadAntrol]);
+
+  const registerAntrol = async (ticketId: string) => {
+    setAntrolBusy(true);
+    const res = await fetch(`/api/registration/queue/${ticketId}/antrol`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ noKartu: antrolNoKartu.trim() }),
+    });
+    setAntrolBusy(false);
+    if (res.ok) {
+      setAntrolFor(null);
+      setAntrolNoKartu("");
+      await loadAntrol();
+    }
+  };
 
   const dispatchReminders = async () => {
     setDispatching(true);
@@ -204,6 +231,48 @@ export function RegistrationView() {
                         </span>
                         <span className="text-sm font-medium">{t.patientId}</span>
                         <Badge variant={STATUS_VARIANT[t.status]}>{STATUS_LABEL[t.status]}</Badge>
+                        {antrol[t.id] ? (
+                          <Badge variant="info" title="BPJS Antrean Online">
+                            Antrol {antrol[t.id].kodeBooking}
+                            {antrol[t.id].isMock ? " (mock)" : ""}
+                          </Badge>
+                        ) : antrolFor === t.id ? (
+                          <Can permission="registration:write">
+                            <span className="flex items-center gap-1.5">
+                              <input
+                                value={antrolNoKartu}
+                                onChange={(e) => setAntrolNoKartu(e.target.value)}
+                                placeholder="No. Kartu BPJS"
+                                inputMode="numeric"
+                                aria-label="Nomor kartu BPJS untuk Antrol"
+                                className="h-8 w-40 rounded-lg border border-border bg-background px-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => registerAntrol(t.id)}
+                                disabled={antrolBusy || !/^\d{10,16}$/.test(antrolNoKartu.trim())}
+                              >
+                                Daftar
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => setAntrolFor(null)}>
+                                Batal
+                              </Button>
+                            </span>
+                          </Can>
+                        ) : (
+                          <Can permission="registration:write">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setAntrolFor(t.id);
+                                setAntrolNoKartu("");
+                              }}
+                            >
+                              Antrol
+                            </Button>
+                          </Can>
+                        )}
                         <Can permission="registration:write">
                           <span className="ml-auto flex gap-1.5">
                             {(NEXT[t.status] ?? []).map((a) => (

@@ -181,3 +181,42 @@ export async function checkRujukan(noKartu: string): Promise<RujukanInfo> {
     mock: false,
   };
 }
+
+export interface AntreanResult {
+  kodeBooking: string;
+  mock: boolean;
+}
+
+/**
+ * Register a queue ticket to BPJS Antrean Online (Antrol). Env-gated: returns a
+ * deterministic mock booking code when BPJS_ANTREAN_* is unset, otherwise POSTs
+ * to the Antrean Online "tambah antrean" endpoint with the VClaim signature.
+ */
+export async function pushAntrean(input: {
+  noKartu: string;
+  kodePoli: string;
+  tanggalPeriksa: string;
+  noAntrean: number;
+}): Promise<AntreanResult> {
+  const env = readEnv();
+  const base = process.env.BPJS_ANTREAN_BASE_URL;
+  if (!env || !base) {
+    const seq = String(Math.floor(Date.now() / 1000)).slice(-6);
+    console.log(`[bpjs:mock] pushAntrean no=${input.noKartu} poli=${input.kodePoli} (Antrol creds unset)`);
+    return { kodeBooking: `MOCKBKG${seq}`, mock: true };
+  }
+  const { timestamp, signature: sig } = signature(env);
+  const res = await fetch(`${base.replace(/\/+$/, "")}/antrean/add`, {
+    method: "POST",
+    headers: {
+      "X-cons-id": env.consId,
+      "X-timestamp": timestamp,
+      "X-signature": sig,
+      user_key: env.userKey,
+      "Content-Type": "application/json; charset=utf-8",
+    },
+    body: JSON.stringify(input),
+  });
+  const data = (await res.json()) as { response?: { kodebooking?: string } };
+  return { kodeBooking: data?.response?.kodebooking ?? "", mock: false };
+}

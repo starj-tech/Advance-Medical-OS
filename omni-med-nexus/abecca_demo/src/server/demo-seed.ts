@@ -16,6 +16,8 @@ import {
 } from "./clinical/encounters";
 import { createBed, createWard, listWards, setBedStatus } from "./facility/beds";
 import { createTicket } from "./registration/queue";
+import { pushAntrean } from "./bpjs/client";
+import { saveAntrol } from "./bpjs/antrol";
 import {
   collectSpecimen,
   createDiagnosticOrder,
@@ -214,9 +216,22 @@ export async function ensureDemoSeed(): Promise<void> {
       note: "Tindak lanjut hasil lab",
     });
 
-    // A couple of outpatient queue tickets for the registration board.
-    await createTicket(DEMO_COMPANY_ID, { patientId: PATIENTS[1], polyclinic: "Penyakit Dalam" });
+    // A couple of outpatient queue tickets for the registration board; the
+    // first is already registered to BPJS Antrean Online (mock booking).
+    const tkt = await createTicket(DEMO_COMPANY_ID, { patientId: PATIENTS[1], polyclinic: "Penyakit Dalam" });
     await createTicket(DEMO_COMPANY_ID, { patientId: PATIENTS[3], polyclinic: "Anak" });
+    const antrean = await pushAntrean({
+      noKartu: "0001234567890",
+      kodePoli: tkt.polyclinic,
+      tanggalPeriksa: tkt.queueDate,
+      noAntrean: tkt.queueNumber,
+    });
+    await saveAntrol(DEMO_COMPANY_ID, tkt.id, tkt.patientId, {
+      noKartu: "0001234567890",
+      kodeBooking: antrean.kodeBooking,
+      poli: tkt.polyclinic,
+      isMock: antrean.mock,
+    });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

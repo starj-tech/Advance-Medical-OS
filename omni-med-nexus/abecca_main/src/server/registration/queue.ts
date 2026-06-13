@@ -123,6 +123,19 @@ export async function listQueue(companyId: string, date?: string): Promise<Queue
     .sort((a, b) => a.polyclinic.localeCompare(b.polyclinic) || a.queueNumber - b.queueNumber);
 }
 
+export async function getTicket(
+  companyId: string,
+  id: string,
+): Promise<QueueTicket | undefined> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("queue_tickets").select("*").eq("company_id", companyId).eq("id", id).maybeSingle();
+    return data ? toTicket(data as Row) : undefined;
+  }
+  return mem.find((t) => t.companyId === companyId && t.id === id);
+}
+
 export async function setTicketStatus(
   companyId: string,
   id: string,
