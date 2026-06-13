@@ -32,6 +32,7 @@ export async function POST(request: Request) {
   const session = await createTeleSession(guard.session.company.id, {
     patientId,
     encounterId: typeof body?.encounterId === "string" ? body.encounterId : null,
+    appointmentId: typeof body?.appointmentId === "string" ? body.appointmentId : null,
     scheduledAt,
     clinicianId: guard.session.user.id,
     note: typeof body?.note === "string" && body.note.trim() ? body.note.trim() : null,

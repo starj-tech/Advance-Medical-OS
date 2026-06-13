@@ -1,9 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CalendarClock, CalendarPlus } from "lucide-react";
-import type { Appointment, AppointmentStatus } from "@/server/scheduling/appointments";
+import { CalendarClock, CalendarPlus, Video } from "lucide-react";
+import type { AppointmentStatus } from "@/server/scheduling/appointments";
+import type { AppointmentWithTele } from "@/server/scheduling/appointment-flow";
 import { POLYCLINICS } from "@/lib/polyclinics";
+import {
+  APPOINTMENT_MODALITIES,
+  APPOINTMENT_MODALITY_LABEL,
+  type AppointmentModality,
+} from "@/lib/appointments";
+import { TELE_STATUS_LABEL, isJoinable } from "@/lib/telemedicine";
 import { formatDateTime } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,19 +23,17 @@ const STATUS_LABEL: Record<AppointmentStatus, string> = {
 const STATUS_VARIANT: Record<AppointmentStatus, "info" | "success" | "danger" | "warning"> = {
   scheduled: "info", checked_in: "success", cancelled: "danger", no_show: "warning",
 };
-const NEXT: { to: AppointmentStatus; label: string; variant: "outline" | "ghost" }[] = [
-  { to: "checked_in", label: "Check-in", variant: "outline" },
-  { to: "no_show", label: "Tidak hadir", variant: "ghost" },
-  { to: "cancelled", label: "Batal", variant: "ghost" },
-];
 
 const inputCls =
   "h-9 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30";
 
-const EMPTY = { patientId: "", polyclinic: POLYCLINICS[0] as string, practitioner: "", scheduledAt: "", notes: "" };
+const EMPTY = {
+  patientId: "", polyclinic: POLYCLINICS[0] as string, practitioner: "",
+  scheduledAt: "", notes: "", modality: "in_person" as AppointmentModality,
+};
 
 export function AppointmentsView() {
-  const [appts, setAppts] = useState<Appointment[]>([]);
+  const [appts, setAppts] = useState<AppointmentWithTele[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -56,6 +61,7 @@ export function AppointmentsView() {
         polyclinic: draft.polyclinic,
         practitioner: draft.practitioner.trim() || null,
         scheduledAt: new Date(draft.scheduledAt).toISOString(),
+        modality: draft.modality,
         notes: draft.notes.trim() || null,
       }),
     });
@@ -82,7 +88,8 @@ export function AppointmentsView() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Janji Temu (Appointment)</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Penjadwalan kunjungan poliklinik. Saat pasien datang, check-in mendorongnya ke antrian hari ini.
+          Penjadwalan kunjungan poliklinik atau telemedicine. Saat pasien datang, check-in mendorong
+          kunjungan tatap muka ke antrian hari ini, atau membuka ruang tunggu video untuk telemedicine.
         </p>
       </div>
 
@@ -99,6 +106,13 @@ export function AppointmentsView() {
             <select className={inputCls} value={draft.polyclinic}
               onChange={(e) => setDraft((d) => ({ ...d, polyclinic: e.target.value }))} aria-label="Poliklinik">
               {POLYCLINICS.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <select className={inputCls} value={draft.modality}
+              onChange={(e) => setDraft((d) => ({ ...d, modality: e.target.value as AppointmentModality }))}
+              aria-label="Jenis kunjungan">
+              {APPOINTMENT_MODALITIES.map((m) => (
+                <option key={m} value={m}>{APPOINTMENT_MODALITY_LABEL[m]}</option>
+              ))}
             </select>
             <input className={inputCls} value={draft.practitioner} placeholder="Dokter (opsional)"
               onChange={(e) => setDraft((d) => ({ ...d, practitioner: e.target.value }))} aria-label="Dokter" />
@@ -135,6 +149,12 @@ export function AppointmentsView() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-medium">{a.polyclinic}</span>
                       <Badge variant={STATUS_VARIANT[a.status]}>{STATUS_LABEL[a.status]}</Badge>
+                      {a.modality === "telemedicine" && (
+                        <Badge variant="info" className="gap-1">
+                          <Video className="size-3" /> Telemedicine
+                          {a.teleStatus ? ` · ${TELE_STATUS_LABEL[a.teleStatus]}` : ""}
+                        </Badge>
+                      )}
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {formatDateTime(a.scheduledAt)} · Pasien {a.patientId}
@@ -142,15 +162,25 @@ export function AppointmentsView() {
                       {a.notes ? ` · ${a.notes}` : ""}
                     </p>
                   </div>
+                  {a.modality === "telemedicine" && a.teleRoomUrl && a.teleStatus && isJoinable(a.teleStatus) && (
+                    <a href={a.teleRoomUrl} target="_blank" rel="noopener noreferrer">
+                      <Button size="sm" variant="outline">
+                        <Video className="size-4" /> Gabung video
+                      </Button>
+                    </a>
+                  )}
                   {a.status === "scheduled" && (
                     <Can permission="registration:write">
                       <span className="flex gap-1.5">
-                        {NEXT.map((act) => (
-                          <Button key={act.to} size="sm" variant={act.variant}
-                            onClick={() => advance(a.id, act.to)}>
-                            {act.label}
-                          </Button>
-                        ))}
+                        <Button size="sm" variant="outline" onClick={() => advance(a.id, "checked_in")}>
+                          {a.modality === "telemedicine" ? "Masuk ruang tunggu" : "Check-in"}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => advance(a.id, "no_show")}>
+                          Tidak hadir
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => advance(a.id, "cancelled")}>
+                          Batal
+                        </Button>
                       </span>
                     </Can>
                   )}

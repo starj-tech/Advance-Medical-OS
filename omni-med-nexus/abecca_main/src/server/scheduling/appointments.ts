@@ -6,6 +6,7 @@
  * env-gated (Supabase or in-memory).
  */
 import { getSupabase } from "../supabase";
+import type { AppointmentModality } from "@/lib/appointments";
 
 export type AppointmentStatus = "scheduled" | "checked_in" | "cancelled" | "no_show";
 export const APPOINTMENT_STATUSES: AppointmentStatus[] = [
@@ -20,8 +21,10 @@ export interface Appointment {
   practitioner: string | null;
   scheduledAt: string;
   status: AppointmentStatus;
+  modality: AppointmentModality;
   notes: string | null;
   queueTicketId: string | null;
+  teleSessionId: string | null;
   createdBy: string | null;
   createdAt: string;
 }
@@ -31,6 +34,7 @@ export interface CreateAppointmentInput {
   polyclinic: string;
   practitioner?: string | null;
   scheduledAt: string;
+  modality?: AppointmentModality;
   notes?: string | null;
   createdBy?: string | null;
 }
@@ -41,14 +45,14 @@ const mem = g.__abeccaAppointments ?? (g.__abeccaAppointments = []);
 type Row = {
   id: string; company_id: string; patient_id: string; polyclinic: string;
   practitioner: string | null; scheduled_at: string; status: AppointmentStatus;
-  notes: string | null; queue_ticket_id: string | null; created_by: string | null;
-  created_at: string;
+  modality: AppointmentModality | null; notes: string | null; queue_ticket_id: string | null;
+  tele_session_id: string | null; created_by: string | null; created_at: string;
 };
 const toAppt = (r: Row): Appointment => ({
   id: r.id, companyId: r.company_id, patientId: r.patient_id, polyclinic: r.polyclinic,
   practitioner: r.practitioner, scheduledAt: r.scheduled_at, status: r.status,
-  notes: r.notes, queueTicketId: r.queue_ticket_id, createdBy: r.created_by,
-  createdAt: r.created_at,
+  modality: r.modality ?? "in_person", notes: r.notes, queueTicketId: r.queue_ticket_id,
+  teleSessionId: r.tele_session_id, createdBy: r.created_by, createdAt: r.created_at,
 });
 
 export async function createAppointment(
@@ -66,6 +70,7 @@ export async function createAppointment(
         practitioner: input.practitioner ?? null,
         scheduled_at: input.scheduledAt,
         status: "scheduled",
+        modality: input.modality ?? "in_person",
         notes: input.notes ?? null,
         created_by: input.createdBy ?? null,
       })
@@ -82,13 +87,38 @@ export async function createAppointment(
     practitioner: input.practitioner ?? null,
     scheduledAt: input.scheduledAt,
     status: "scheduled",
+    modality: input.modality ?? "in_person",
     notes: input.notes ?? null,
     queueTicketId: null,
+    teleSessionId: null,
     createdBy: input.createdBy ?? null,
     createdAt: new Date().toISOString(),
   };
   mem.push(appt);
   return appt;
+}
+
+/** Link a created telemedicine session back onto its appointment. */
+export async function setAppointmentTeleSession(
+  companyId: string,
+  id: string,
+  teleSessionId: string,
+): Promise<Appointment | undefined> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("appointments")
+      .update({ tele_session_id: teleSessionId })
+      .eq("company_id", companyId)
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
+    return data ? toAppt(data as Row) : undefined;
+  }
+  const a = mem.find((x) => x.companyId === companyId && x.id === id);
+  if (!a) return undefined;
+  a.teleSessionId = teleSessionId;
+  return a;
 }
 
 /** Appointments sorted by slot time ascending. */

@@ -18,6 +18,7 @@ import { createBed, createWard, listWards, setBedStatus } from "./facility/beds"
 import { createTicket } from "./registration/queue";
 import { pushAntrean } from "./bpjs/client";
 import { saveAntrol } from "./bpjs/antrol";
+import { bookAppointment, checkInAppointment } from "./scheduling/appointment-flow";
 import {
   collectSpecimen,
   createDiagnosticOrder,
@@ -232,6 +233,26 @@ export async function ensureDemoSeed(): Promise<void> {
       poli: tkt.polyclinic,
       isMock: antrean.mock,
     });
+
+    // Appointments board — an in-person booking plus two telemedicine visits:
+    // one still scheduled (shows check-in → ruang tunggu) and one already admitted
+    // to the virtual waiting room (live "Gabung video" link backed by a session).
+    await bookAppointment(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[2], polyclinic: "Penyakit Dalam", modality: "in_person",
+      scheduledAt: new Date(Date.now() + 24 * 3600_000).toISOString(),
+      practitioner: "dr. Sari, Sp.PD",
+    });
+    await bookAppointment(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[4], polyclinic: "Anak", modality: "telemedicine",
+      scheduledAt: new Date(Date.now() + 2 * 3600_000).toISOString(),
+      practitioner: "dr. Andi, Sp.A", notes: "Konsultasi demam",
+    });
+    const teleAppt = await bookAppointment(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[0], polyclinic: "Jantung", modality: "telemedicine",
+      scheduledAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      practitioner: "dr. Rina, Sp.JP", notes: "Kontrol pasca rawat",
+    });
+    await checkInAppointment(DEMO_COMPANY_ID, teleAppt.id);
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

@@ -14,6 +14,7 @@ export interface TeleSession {
   companyId: string;
   patientId: string;
   encounterId: string | null;
+  appointmentId: string | null;
   scheduledAt: string;
   status: TeleStatus;
   roomId: string;
@@ -28,13 +29,14 @@ const mem = g.__abeccaTele ?? (g.__abeccaTele = []);
 
 type Row = {
   id: string; company_id: string; patient_id: string; encounter_id: string | null;
-  scheduled_at: string; status: TeleStatus; room_id: string; room_url: string;
-  clinician_id: string | null; note: string | null; created_at: string;
+  appointment_id: string | null; scheduled_at: string; status: TeleStatus; room_id: string;
+  room_url: string; clinician_id: string | null; note: string | null; created_at: string;
 };
 const toSession = (r: Row): TeleSession => ({
   id: r.id, companyId: r.company_id, patientId: r.patient_id, encounterId: r.encounter_id,
-  scheduledAt: r.scheduled_at, status: r.status, roomId: r.room_id, roomUrl: r.room_url,
-  clinicianId: r.clinician_id, note: r.note, createdAt: r.created_at,
+  appointmentId: r.appointment_id, scheduledAt: r.scheduled_at, status: r.status,
+  roomId: r.room_id, roomUrl: r.room_url, clinicianId: r.clinician_id, note: r.note,
+  createdAt: r.created_at,
 });
 
 /** Resolve the join URL for a room id from the configured provider (or Jitsi). */
@@ -48,6 +50,7 @@ export async function createTeleSession(
   input: {
     patientId: string;
     encounterId?: string | null;
+    appointmentId?: string | null;
     scheduledAt: string;
     clinicianId?: string | null;
     note?: string | null;
@@ -63,6 +66,7 @@ export async function createTeleSession(
         company_id: companyId,
         patient_id: input.patientId,
         encounter_id: input.encounterId ?? null,
+        appointment_id: input.appointmentId ?? null,
         scheduled_at: input.scheduledAt,
         status: "scheduled",
         room_id: roomId,
@@ -80,6 +84,7 @@ export async function createTeleSession(
     companyId,
     patientId: input.patientId,
     encounterId: input.encounterId ?? null,
+    appointmentId: input.appointmentId ?? null,
     scheduledAt: input.scheduledAt,
     status: "scheduled",
     roomId,

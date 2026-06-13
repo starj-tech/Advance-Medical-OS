@@ -6,7 +6,7 @@ import {
   setAppointmentStatus,
   type AppointmentStatus,
 } from "@/server/scheduling/appointments";
-import { createTicket } from "@/server/registration/queue";
+import { checkInAppointment } from "@/server/scheduling/appointment-flow";
 
 export const dynamic = "force-dynamic";
 
@@ -22,27 +22,21 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: "invalid status" }, { status: 400 });
   }
 
-  const appt = await getAppointment(companyId, id);
-  if (!appt) return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
-
-  // Check-in closes the loop: the patient who arrives for a scheduled appointment
-  // is pushed into today's poliklinik antrian (a queue ticket), and the ticket is
-  // recorded on the appointment.
+  // Check-in closes the loop. An in-person appointment is pushed into today's
+  // poliklinik antrian (a queue ticket); a telemedicine appointment admits the
+  // patient to the virtual waiting room (its video session → waiting).
   if (status === "checked_in") {
-    if (appt.status !== "scheduled") {
-      return NextResponse.json(
-        { error: "only a scheduled appointment can be checked in" },
-        { status: 409 },
-      );
-    }
-    const ticket = await createTicket(companyId, {
-      patientId: appt.patientId,
-      polyclinic: appt.polyclinic,
+    const result = await checkInAppointment(companyId, id);
+    if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+    return NextResponse.json({
+      appointment: result.appointment,
+      ticket: result.ticket,
+      teleSession: result.teleSession,
     });
-    const appointment = await setAppointmentStatus(companyId, id, "checked_in", ticket.id);
-    return NextResponse.json({ appointment, ticket });
   }
 
+  const appt = await getAppointment(companyId, id);
+  if (!appt) return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
   const appointment = await setAppointmentStatus(companyId, id, status);
   return NextResponse.json({ appointment });
 }

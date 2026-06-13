@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/server/auth/guard";
-import { createAppointment, listAppointments } from "@/server/scheduling/appointments";
+import { listAppointments } from "@/server/scheduling/appointments";
+import { bookAppointment, listAppointmentsWithTele } from "@/server/scheduling/appointment-flow";
 import { isPolyclinic } from "@/lib/polyclinics";
+import { isAppointmentModality } from "@/lib/appointments";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,10 @@ const str = (v: unknown): string | null => {
 export async function GET() {
   const guard = await requirePermission("registration:read");
   if (guard.error) return guard.error;
-  return NextResponse.json(await listAppointments(guard.session.company.id));
+  const companyId = guard.session.company.id;
+  return NextResponse.json(
+    await listAppointmentsWithTele(companyId, await listAppointments(companyId)),
+  );
 }
 
 export async function POST(request: Request) {
@@ -36,9 +41,10 @@ export async function POST(request: Request) {
   if (Number.isNaN(Date.parse(scheduledAt))) {
     return NextResponse.json({ error: "scheduledAt must be a valid date-time" }, { status: 400 });
   }
+  const modality = isAppointmentModality(body?.modality) ? body.modality : "in_person";
 
-  const appointment = await createAppointment(guard.session.company.id, {
-    patientId, polyclinic, practitioner: str(body?.practitioner), scheduledAt,
+  const appointment = await bookAppointment(guard.session.company.id, {
+    patientId, polyclinic, practitioner: str(body?.practitioner), scheduledAt, modality,
     notes: str(body?.notes), createdBy: guard.session.user.id,
   });
   return NextResponse.json(appointment, { status: 201 });
