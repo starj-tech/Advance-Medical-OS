@@ -9,6 +9,8 @@ import {
   verifyPortalCode,
   clearPortalCookie,
 } from "@/server/portal/access";
+import { enforceRateLimit } from "@/server/security/rate-limit";
+import { RATE_RULES } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,15 @@ export async function POST(request: Request) {
 
   // One generic failure for any wrong field — don't reveal which part was wrong.
   const company = await getCompanyByCode(companyCode);
+
+  // Throttle per portal account to blunt access-code guessing.
+  const limited = await enforceRateLimit(
+    `portal:${companyCode.toLowerCase()}:${patientId.toLowerCase()}`,
+    RATE_RULES.portalLogin,
+    { action: "portal_login", companyId: company?.id ?? null },
+  );
+  if (limited) return limited;
+
   const ok = company && (await verifyPortalCode(company.id, patientId, code));
   if (!company || !ok) {
     return NextResponse.json({ error: "Kredensial portal tidak valid" }, { status: 401 });

@@ -7,6 +7,8 @@ import {
 } from "@/server/auth/store";
 import { setSessionCookie } from "@/server/auth/session";
 import { logEvent } from "@/server/observability/log";
+import { enforceRateLimit } from "@/server/security/rate-limit";
+import { RATE_RULES } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -22,9 +24,19 @@ export async function POST(request: Request) {
   if (!companyCode || !email || !password) {
     return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
   }
+
+  // Resolve the tenant once (used for rate-limit + auth event scoping), then
+  // throttle per account to blunt brute-force attempts before touching the DB.
+  const company = await getCompanyByCode(String(companyCode));
+  const accountKey = `login:${String(companyCode).toLowerCase()}:${String(email).toLowerCase()}`;
+  const limited = await enforceRateLimit(accountKey, RATE_RULES.login, {
+    action: "login",
+    companyId: company?.id ?? null,
+  });
+  if (limited) return limited;
+
   const user = await authenticate(String(companyCode), String(email), String(password));
   if (!user) {
-    const company = await getCompanyByCode(String(companyCode));
     await logEvent({
       level: "warn",
       scope: "auth",
