@@ -20,6 +20,7 @@ import { pushAntrean } from "./bpjs/client";
 import { saveAntrol } from "./bpjs/antrol";
 import { bookAppointment, checkInAppointment } from "./scheduling/appointment-flow";
 import { logEvent } from "./observability/log";
+import { issueApiKey } from "./integrations/api-keys";
 import {
   collectSpecimen,
   createDiagnosticOrder,
@@ -262,6 +263,9 @@ export async function ensureDemoSeed(): Promise<void> {
     await logEvent({ level: "warn", scope: "authz", message: "Akses ditolak (billing:manage)", companyId: DEMO_COMPANY_ID, fields: { permission: "billing:manage", subRole: "perawat-pelaksana" } });
     await logEvent({ level: "info", scope: "integration", message: "SATUSEHAT — kirim bundle (mock)", companyId: DEMO_COMPANY_ID, fields: { resource: "Encounter", mock: true } });
     await logEvent({ level: "error", scope: "integration", message: "Pengingat WhatsApp gagal terkirim (mock)", companyId: DEMO_COMPANY_ID, fields: { channel: "whatsapp", mock: true } });
+
+    // A sample API key so the Integrations page lists an existing key.
+    await issueApiKey(DEMO_COMPANY_ID, "Integrasi SIMRS (contoh)", null);
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

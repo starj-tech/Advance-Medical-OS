@@ -25,6 +25,7 @@ import {
   Video,
   ShieldCheck,
   Users,
+  Webhook,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ const nav = [
   { href: "/safety", label: "Keselamatan", icon: ShieldAlert },
   { href: "/audit", label: "Audit Trail", icon: ShieldCheck },
   { href: "/observability", label: "Observability", icon: Gauge },
+  { href: "/integrations", label: "Integrasi", icon: Webhook },
   { href: "/security", label: "Keamanan Akun", icon: KeyRound },
 ];
 

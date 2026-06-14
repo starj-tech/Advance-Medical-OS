@@ -70,7 +70,8 @@ export type Permission =
   | "user:read"
   | "user:manage"
   | "analytics:read"
-  | "notification:read";
+  | "notification:read"
+  | "integration:manage";
 
 export interface PermissionSubject {
   roleTier: RoleTier;
@@ -163,8 +164,8 @@ const SUBROLE_OVERRIDES: Record<string, Permission[]> = {
   "dir-sdm-umum": ["user:read", "user:manage"],
   // Biomedical / IT
   "teknisi-ipsrs": ["device:read", "device:write"],
-  "mgr-ti": ["device:read", "device:write", "user:read"],
-  cio: ["device:read", "device:write", "user:read", "audit:read"],
+  "mgr-ti": ["device:read", "device:write", "user:read", "integration:manage"],
+  cio: ["device:read", "device:write", "user:read", "audit:read", "integration:manage"],
   // Special-care units — the ICU head (manager tier) also records APACHE
   // assessments; chemotherapy courses are the oncologist's authority.
   "ka-icu": ["icu:read", "icu:assess", "hd:read", "hd:manage"],
