@@ -21,6 +21,7 @@ import { saveAntrol } from "./bpjs/antrol";
 import { bookAppointment, checkInAppointment } from "./scheduling/appointment-flow";
 import { logEvent } from "./observability/log";
 import { issueApiKey } from "./integrations/api-keys";
+import { registerWebhook } from "./integrations/webhooks";
 import {
   collectSpecimen,
   createDiagnosticOrder,
@@ -264,8 +265,14 @@ export async function ensureDemoSeed(): Promise<void> {
     await logEvent({ level: "info", scope: "integration", message: "SATUSEHAT — kirim bundle (mock)", companyId: DEMO_COMPANY_ID, fields: { resource: "Encounter", mock: true } });
     await logEvent({ level: "error", scope: "integration", message: "Pengingat WhatsApp gagal terkirim (mock)", companyId: DEMO_COMPANY_ID, fields: { channel: "whatsapp", mock: true } });
 
-    // A sample API key so the Integrations page lists an existing key.
+    // A sample API key + webhook so the Integrations page is populated. The
+    // webhook URL uses a non-routable .test host so any later delivery fails
+    // fast without a real outbound call.
     await issueApiKey(DEMO_COMPANY_ID, "Integrasi SIMRS (contoh)", null);
+    await registerWebhook(DEMO_COMPANY_ID, {
+      url: "https://webhook.example.test/abecca",
+      events: ["appointment.created", "diagnostic.critical"],
+    });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

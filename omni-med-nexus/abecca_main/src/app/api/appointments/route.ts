@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requirePermission } from "@/server/auth/guard";
 import { listAppointments } from "@/server/scheduling/appointments";
 import { bookAppointment, listAppointmentsWithTele } from "@/server/scheduling/appointment-flow";
+import { dispatchWebhooks } from "@/server/integrations/webhooks";
 import { isPolyclinic } from "@/lib/polyclinics";
 import { isAppointmentModality } from "@/lib/appointments";
 
@@ -47,5 +48,7 @@ export async function POST(request: Request) {
     patientId, polyclinic, practitioner: str(body?.practitioner), scheduledAt, modality,
     notes: str(body?.notes), createdBy: guard.session.user.id,
   });
+  // Notify any subscribed webhook endpoints (best-effort; no-op when none).
+  await dispatchWebhooks(guard.session.company.id, "appointment.created", appointment);
   return NextResponse.json(appointment, { status: 201 });
 }
