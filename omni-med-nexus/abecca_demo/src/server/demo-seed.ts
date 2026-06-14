@@ -22,6 +22,7 @@ import { bookAppointment, checkInAppointment } from "./scheduling/appointment-fl
 import { logEvent } from "./observability/log";
 import { issueApiKey } from "./integrations/api-keys";
 import { registerWebhook } from "./integrations/webhooks";
+import { createEdVisit, markSeen } from "./ed/triage";
 import {
   collectSpecimen,
   createDiagnosticOrder,
@@ -272,6 +273,21 @@ export async function ensureDemoSeed(): Promise<void> {
     await registerWebhook(DEMO_COMPANY_ID, {
       url: "https://webhook.example.test/abecca",
       events: ["appointment.created", "diagnostic.critical"],
+    });
+
+    // IGD tracking board — a spread of acuities; the emergent case already seen.
+    const edEmergent = await createEdVisit(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[4], complaint: "Nyeri dada hebat, sesak",
+      esi: { lifeSaving: false, highRisk: true, resources: 3, dangerVitals: true },
+    });
+    await markSeen(DEMO_COMPANY_ID, edEmergent.id);
+    await createEdVisit(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[2], complaint: "Demam tinggi & muntah",
+      esi: { lifeSaving: false, highRisk: false, resources: 2, dangerVitals: false },
+    });
+    await createEdVisit(DEMO_COMPANY_ID, {
+      patientId: PATIENTS[5], complaint: "Luka lecet ringan",
+      esi: { lifeSaving: false, highRisk: false, resources: 0, dangerVitals: false },
     });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);

@@ -11,6 +11,7 @@ const titles: Record<string, string> = {
   "/analytics": "Analitik Eksekutif",
   "/copilot": "Abecca Copilot",
   "/registration": "Pendaftaran & Antrian",
+  "/emergency": "IGD — Triase & Papan Lacak",
   "/appointments": "Janji Temu",
   "/telemedicine": "Telemedicine",
   "/patients": "Patients",
