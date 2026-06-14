@@ -10,6 +10,7 @@ import {
   ClipboardList,
   FileText,
   FlaskConical,
+  Gauge,
   HeartPulse,
   Images,
   KeyRound,
@@ -47,6 +48,7 @@ const nav = [
   { href: "/tariffs", label: "Tariffs", icon: Receipt },
   { href: "/safety", label: "Keselamatan", icon: ShieldAlert },
   { href: "/audit", label: "Audit Trail", icon: ShieldCheck },
+  { href: "/observability", label: "Observability", icon: Gauge },
   { href: "/security", label: "Keamanan Akun", icon: KeyRound },
 ];
 

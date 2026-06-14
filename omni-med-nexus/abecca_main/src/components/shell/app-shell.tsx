@@ -26,6 +26,7 @@ const titles: Record<string, string> = {
   "/tariffs": "Tariffs",
   "/safety": "Keselamatan Pasien",
   "/audit": "Audit Trail",
+  "/observability": "Observability",
   "/security": "Keamanan Akun",
 };
 

@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser, type AuthUser, type Company } from "./store";
 import { readSessionToken } from "./session";
 import { hasPermission, type Permission } from "@/lib/permissions";
+import { logEvent } from "@/server/observability/log";
 
 export interface Session {
   user: AuthUser;
@@ -42,6 +43,16 @@ export async function requirePermission(perm: Permission): Promise<Guarded> {
   const r = await requireUser();
   if (r.error) return r;
   if (!hasPermission(r.session.user, perm)) {
+    // Authorization denials are a high-value security signal — record one
+    // (best-effort; logEvent never throws, so this can't break the guard).
+    await logEvent({
+      level: "warn",
+      scope: "authz",
+      message: `Akses ditolak (${perm})`,
+      companyId: r.session.company.id,
+      userId: r.session.user.id,
+      fields: { permission: perm, subRole: r.session.user.subRole },
+    });
     return {
       error: NextResponse.json({ error: "Forbidden", permission: perm }, { status: 403 }),
     };
