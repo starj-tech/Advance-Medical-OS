@@ -40,6 +40,7 @@ import { RecordVitalsDialog } from "@/components/clinical/record-vitals-dialog";
 import { DispenseDialog } from "@/components/clinical/dispense-dialog";
 import { TransferDialog } from "@/components/clinical/transfer-dialog";
 import { EncountersPanel } from "@/components/clinical/encounters-panel";
+import { PortalCodeCard } from "@/components/clinical/portal-code-card";
 
 function vitalCards(p: Patient) {
   const { vitals } = p;
@@ -361,6 +362,7 @@ export function PatientDetail({ id }: { id: string }) {
 
         {/* Security + allergies */}
         <div className="flex flex-col gap-6">
+          <PortalCodeCard patientId={patient.id} />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

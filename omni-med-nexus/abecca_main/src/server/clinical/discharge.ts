@@ -68,6 +68,26 @@ export async function getDischargeSummary(
   return mem.find((d) => d.companyId === companyId && d.encounterId === encounterId);
 }
 
+/** Every discharge summary (resume medis) for a patient — newest first; patient portal. */
+export async function listDischargeSummariesForPatient(
+  companyId: string,
+  patientId: string,
+): Promise<DischargeSummary[]> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb
+      .from("discharge_summaries")
+      .select("*")
+      .eq("company_id", companyId)
+      .eq("patient_id", patientId)
+      .order("created_at", { ascending: false });
+    return (data ?? []).map((r) => toSummary(r as Row));
+  }
+  return mem
+    .filter((d) => d.companyId === companyId && d.patientId === patientId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 export async function createDischargeSummary(
   companyId: string,
   encounterId: string,

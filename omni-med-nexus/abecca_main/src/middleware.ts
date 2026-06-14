@@ -21,6 +21,9 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith("/api")) return NextResponse.next();
+  // The patient portal is a separate self-service surface with its own auth
+  // (server/portal/access.ts), so the staff session check must not gate it.
+  if (pathname === "/portal" || pathname.startsWith("/portal/")) return NextResponse.next();
   if (PUBLIC_PAGES.has(pathname)) return NextResponse.next();
 
   if (!req.cookies.has(SESSION_COOKIE)) {

@@ -280,6 +280,11 @@ const memory = {
     return rowToUser(row);
   },
 
+  async companyByCode(code: string) {
+    const id = mem.codeToId.get(code);
+    return id ? mem.companies.get(id) : undefined;
+  },
+
   async setEmployeePassword(token: string, password: string) {
     const h = hashToken(token);
     const row = mem.users.find((u) => u.invite_token_hash === h);
@@ -496,6 +501,11 @@ const supa = {
   async deleteSession(sb: SupabaseClient, token: string) {
     await sb.from("sessions").delete().eq("token_hash", hashToken(token));
   },
+
+  async companyByCode(sb: SupabaseClient, code: string) {
+    const { data } = await sb.from("companies").select("*").eq("company_code", code).maybeSingle();
+    return data ? sbCompany(data) : undefined;
+  },
 };
 
 /* ============================== public API ================================ */
@@ -541,6 +551,12 @@ export async function getSessionUser(
 export async function destroySession(token: string): Promise<void> {
   const sb = getSupabase();
   return sb ? supa.deleteSession(sb, token) : memory.deleteSession(token);
+}
+
+/** Resolve a tenant by its human-readable Company ID (company_code). */
+export async function getCompanyByCode(code: string): Promise<Company | undefined> {
+  const sb = getSupabase();
+  return sb ? supa.companyByCode(sb, code) : memory.companyByCode(code);
 }
 
 /* ============================== MFA (TOTP) ================================ */

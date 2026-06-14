@@ -155,6 +155,30 @@ export async function billSummary(companyId: string, encounterId: string): Promi
   return { charges, payments, totalCharges, totalPaid, balance: totalCharges - totalPaid };
 }
 
+/** A patient's running balance across every encounter — shown in the patient portal. */
+export async function patientBalance(
+  companyId: string,
+  patientId: string,
+): Promise<{ totalCharges: number; totalPaid: number; balance: number }> {
+  const sb = getSupabase();
+  let charges: BillCharge[];
+  let payments: BillPayment[];
+  if (sb) {
+    const [c, p] = await Promise.all([
+      sb.from("bill_charges").select("*").eq("company_id", companyId).eq("patient_id", patientId),
+      sb.from("bill_payments").select("*").eq("company_id", companyId).eq("patient_id", patientId),
+    ]);
+    charges = (c.data ?? []).map((r) => toCharge(r as ChargeRow));
+    payments = (p.data ?? []).map((r) => toPayment(r as PaymentRow));
+  } else {
+    charges = mem.charges.filter((x) => x.companyId === companyId && x.patientId === patientId);
+    payments = mem.payments.filter((x) => x.companyId === companyId && x.patientId === patientId);
+  }
+  const totalCharges = charges.reduce((s, c) => s + c.amount, 0);
+  const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
+  return { totalCharges, totalPaid, balance: totalCharges - totalPaid };
+}
+
 export interface RevenueSummary {
   totalCharges: number;
   totalPaid: number;
