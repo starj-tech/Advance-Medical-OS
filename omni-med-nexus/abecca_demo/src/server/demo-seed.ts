@@ -23,6 +23,7 @@ import { logEvent } from "./observability/log";
 import { issueApiKey } from "./integrations/api-keys";
 import { registerWebhook } from "./integrations/webhooks";
 import { createEdVisit, markSeen } from "./ed/triage";
+import { createCredential } from "./hr/credentials";
 import {
   collectSpecimen,
   createDiagnosticOrder,
@@ -289,6 +290,13 @@ export async function ensureDemoSeed(): Promise<void> {
       patientId: PATIENTS[5], complaint: "Luka lecet ringan",
       esi: { lifeSaving: false, highRisk: false, resources: 0, dangerVitals: false },
     });
+
+    // Kredensial nakes — campuran berlaku, segera kedaluwarsa, dan kedaluwarsa.
+    const cdays = (d: number) => new Date(Date.now() + d * 86_400_000).toISOString().slice(0, 10);
+    await createCredential(DEMO_COMPANY_ID, { staffName: "dr. Andi Pratama", profession: "Dokter Umum", credentialType: "SIP", number: "SIP/2024/0451", issuedDate: cdays(-700), expiryDate: cdays(300) });
+    await createCredential(DEMO_COMPANY_ID, { staffName: "apt. Sri Wahyuni, S.Farm", profession: "Apoteker", credentialType: "SIPA", number: "SIPA/2023/0118", issuedDate: cdays(-1000), expiryDate: cdays(45) });
+    await createCredential(DEMO_COMPANY_ID, { staffName: "Ns. Maya Sari", profession: "Perawat", credentialType: "SIPP", number: "SIPP/2022/0772", issuedDate: cdays(-1200), expiryDate: cdays(-20) });
+    await createCredential(DEMO_COMPANY_ID, { staffName: "Bd. Rina Lestari", profession: "Bidan", credentialType: "SIPB", number: "SIPB/2024/0339", issuedDate: cdays(-400), expiryDate: cdays(420) });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

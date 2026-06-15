@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
+  BadgeCheck,
   BarChart3,
   BedDouble,
   CalendarClock,
@@ -49,6 +50,7 @@ const nav = [
   { href: "/pharmacy", label: "Farmasi", icon: PackageCheck },
   { href: "/tariffs", label: "Tariffs", icon: Receipt },
   { href: "/safety", label: "Keselamatan", icon: ShieldAlert },
+  { href: "/credentials", label: "Kredensial Nakes", icon: BadgeCheck },
   { href: "/audit", label: "Audit Trail", icon: ShieldCheck },
   { href: "/observability", label: "Observability", icon: Gauge },
   { href: "/integrations", label: "Integrasi", icon: Webhook },
