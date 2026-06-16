@@ -24,6 +24,7 @@ import { issueApiKey } from "./integrations/api-keys";
 import { registerWebhook } from "./integrations/webhooks";
 import { createEdVisit, markSeen } from "./ed/triage";
 import { createCredential } from "./hr/credentials";
+import { recordCase, recordDenominator } from "./ppi/surveillance";
 import {
   collectSpecimen,
   createDiagnosticOrder,
@@ -297,6 +298,15 @@ export async function ensureDemoSeed(): Promise<void> {
     await createCredential(DEMO_COMPANY_ID, { staffName: "apt. Sri Wahyuni, S.Farm", profession: "Apoteker", credentialType: "SIPA", number: "SIPA/2023/0118", issuedDate: cdays(-1000), expiryDate: cdays(45) });
     await createCredential(DEMO_COMPANY_ID, { staffName: "Ns. Maya Sari", profession: "Perawat", credentialType: "SIPP", number: "SIPP/2022/0772", issuedDate: cdays(-1200), expiryDate: cdays(-20) });
     await createCredential(DEMO_COMPANY_ID, { staffName: "Bd. Rina Lestari", profession: "Bidan", credentialType: "SIPB", number: "SIPB/2024/0339", issuedDate: cdays(-400), expiryDate: cdays(420) });
+
+    // PPI — surveilans HAIs bulan ini: beberapa kasus + denominator hari-alat.
+    const pm = new Date().toISOString().slice(0, 7);
+    const pday = (d: number) => `${pm}-${String(d).padStart(2, "0")}`;
+    await recordCase(DEMO_COMPANY_ID, { patientId: PATIENTS[0], haiType: "VAP", unit: "ICU", onsetDate: pday(8), note: "Onset hari ke-5 ventilasi mekanik" });
+    await recordCase(DEMO_COMPANY_ID, { patientId: PATIENTS[4], haiType: "ISK", unit: "Rawat Inap Melati", onsetDate: pday(14) });
+    await recordDenominator(DEMO_COMPANY_ID, { period: pm, haiType: "VAP", unit: "ICU", deviceDays: 320 });
+    await recordDenominator(DEMO_COMPANY_ID, { period: pm, haiType: "IAD", unit: "ICU", deviceDays: 280 });
+    await recordDenominator(DEMO_COMPANY_ID, { period: pm, haiType: "ISK", unit: "Rawat Inap Melati", deviceDays: 540 });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
