@@ -25,6 +25,7 @@ import { registerWebhook } from "./integrations/webhooks";
 import { createEdVisit, markSeen } from "./ed/triage";
 import { createCredential } from "./hr/credentials";
 import { recordCase, recordDenominator } from "./ppi/surveillance";
+import { recordInmEntry } from "./quality/inm";
 import {
   collectSpecimen,
   createDiagnosticOrder,
@@ -307,6 +308,13 @@ export async function ensureDemoSeed(): Promise<void> {
     await recordDenominator(DEMO_COMPANY_ID, { period: pm, haiType: "VAP", unit: "ICU", deviceDays: 320 });
     await recordDenominator(DEMO_COMPANY_ID, { period: pm, haiType: "IAD", unit: "ICU", deviceDays: 280 });
     await recordDenominator(DEMO_COMPANY_ID, { period: pm, haiType: "ISK", unit: "Rawat Inap Melati", deviceDays: 540 });
+
+    // INM — capaian beberapa indikator mutu bulan ini (campuran tercapai/belum).
+    await recordInmEntry(DEMO_COMPANY_ID, { period: pm, code: "INM-01", numerator: 178, denominator: 200 }); // 89% ≥85 → tercapai
+    await recordInmEntry(DEMO_COMPANY_ID, { period: pm, code: "INM-03", numerator: 200, denominator: 200 }); // 100% → tercapai
+    await recordInmEntry(DEMO_COMPANY_ID, { period: pm, code: "INM-05", numerator: 142, denominator: 200 }); // 71% <80 → belum
+    await recordInmEntry(DEMO_COMPANY_ID, { period: pm, code: "INM-06", numerator: 4, denominator: 120 });   // 3.3% ≤5 → tercapai
+    await recordInmEntry(DEMO_COMPANY_ID, { period: pm, code: "INM-13", numerator: 158, denominator: 200 }); // 79% ≥76.61 → tercapai
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
