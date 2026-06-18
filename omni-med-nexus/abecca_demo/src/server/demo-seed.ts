@@ -26,6 +26,7 @@ import { createEdVisit, markSeen } from "./ed/triage";
 import { createCredential } from "./hr/credentials";
 import { recordCase, recordDenominator } from "./ppi/surveillance";
 import { recordInmEntry } from "./quality/inm";
+import { createRisk, updateRisk } from "./quality/risk-register";
 import { createItem, recordBatch } from "./pharmacy/inventory";
 import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
@@ -345,6 +346,16 @@ export async function ensureDemoSeed(): Promise<void> {
       supplier: "PT Enseval Putera Megatrading",
       lines: [{ itemId: rl.id, quantity: 50, unitPrice: 8000 }],
     });
+
+    // Manajemen risiko — register dgn band campuran (matriks 5×5) + lifecycle.
+    const rFire = await createRisk(DEMO_COMPANY_ID, { title: "Kebakaran ruang server", category: "operational", likelihood: 4, consequence: 5, owner: "Manajer IPSRS", mitigation: "APAR otomatis + deteksi dini + UPS redundan" });
+    await updateRisk(DEMO_COMPANY_ID, rFire.id, { status: "mitigating" });
+    await createRisk(DEMO_COMPANY_ID, { title: "Kekurangan perawat shift malam", category: "operational", likelihood: 4, consequence: 3, owner: "Manajer Keperawatan" });
+    const rLab = await createRisk(DEMO_COMPANY_ID, { title: "Keterlambatan pelaporan nilai kritis lab", category: "clinical", likelihood: 3, consequence: 2, owner: "Ka. Laboratorium", mitigation: "SOP callback < 30 menit" });
+    await updateRisk(DEMO_COMPANY_ID, rLab.id, { status: "monitored" });
+    await createRisk(DEMO_COMPANY_ID, { title: "Keluhan ketersediaan lahan parkir", category: "reputational", likelihood: 2, consequence: 1 });
+    const rPower = await createRisk(DEMO_COMPANY_ID, { title: "Pemadaman listrik area rawat jalan", category: "operational", likelihood: 1, consequence: 3 });
+    await updateRisk(DEMO_COMPANY_ID, rPower.id, { status: "closed" });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

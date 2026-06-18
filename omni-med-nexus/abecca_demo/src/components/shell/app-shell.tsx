@@ -29,6 +29,7 @@ const titles: Record<string, string> = {
   "/procurement": "Pengadaan Farmasi",
   "/tariffs": "Tariffs",
   "/safety": "Keselamatan Pasien",
+  "/risk-register": "Manajemen Risiko",
   "/infection-control": "PPI — Surveilans Infeksi",
   "/quality-indicators": "Indikator Nasional Mutu",
   "/credentials": "Kredensial Tenaga Kesehatan",
