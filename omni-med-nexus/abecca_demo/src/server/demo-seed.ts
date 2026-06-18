@@ -26,6 +26,7 @@ import { createEdVisit, markSeen } from "./ed/triage";
 import { createCredential } from "./hr/credentials";
 import { recordCase, recordDenominator } from "./ppi/surveillance";
 import { recordInmEntry } from "./quality/inm";
+import { createItem, recordBatch } from "./pharmacy/inventory";
 import {
   collectSpecimen,
   createDiagnosticOrder,
@@ -315,6 +316,16 @@ export async function ensureDemoSeed(): Promise<void> {
     await recordInmEntry(DEMO_COMPANY_ID, { period: pm, code: "INM-05", numerator: 142, denominator: 200 }); // 71% <80 → belum
     await recordInmEntry(DEMO_COMPANY_ID, { period: pm, code: "INM-06", numerator: 4, denominator: 120 });   // 3.3% ≤5 → tercapai
     await recordInmEntry(DEMO_COMPANY_ID, { period: pm, code: "INM-13", numerator: 158, denominator: 200 }); // 79% ≥76.61 → tercapai
+
+    // Inventory farmasi — campuran item/batch utk memicu setiap jenis alert (reorder + ED).
+    const pcm = await createItem(DEMO_COMPANY_ID, { name: "Paracetamol 500 mg", unit: "tablet", reorderPoint: 100 });
+    await recordBatch(DEMO_COMPANY_ID, pcm.id, { batchNo: "BPC-2405", quantity: 500, expiryDate: cdays(400) }); // aman
+    await recordBatch(DEMO_COMPANY_ID, pcm.id, { batchNo: "BPC-2312", quantity: 80, expiryDate: cdays(60) });   // segera kedaluwarsa
+    const amx = await createItem(DEMO_COMPANY_ID, { name: "Amoksisilin 500 mg", unit: "kapsul", reorderPoint: 50 });
+    await recordBatch(DEMO_COMPANY_ID, amx.id, { batchNo: "AMX-2403", quantity: 30, expiryDate: cdays(150) });  // stok rendah (≤reorder)
+    const rl = await createItem(DEMO_COMPANY_ID, { name: "Ringer Laktat 500 mL", unit: "botol", reorderPoint: 40 });
+    await recordBatch(DEMO_COMPANY_ID, rl.id, { batchNo: "RL-2401", quantity: 18, expiryDate: cdays(-12) });    // kedaluwarsa
+    await createItem(DEMO_COMPANY_ID, { name: "Insulin Glargine 100 IU/mL", unit: "pen", reorderPoint: 20 });    // habis (tanpa batch)
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
