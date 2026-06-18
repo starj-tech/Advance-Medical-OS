@@ -25,6 +25,7 @@ const titles: Record<string, string> = {
   "/formulary": "Formulary",
   "/pharmacy": "Dispensing Farmasi",
   "/inventory": "Inventory Farmasi",
+  "/procurement": "Pengadaan Farmasi",
   "/tariffs": "Tariffs",
   "/safety": "Keselamatan Pasien",
   "/infection-control": "PPI — Surveilans Infeksi",

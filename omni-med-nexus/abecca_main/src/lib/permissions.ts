@@ -62,6 +62,8 @@ export type Permission =
   | "device:write"
   | "formulary:read"
   | "formulary:dispense"
+  | "procurement:read"
+  | "procurement:manage"
   | "tariff:read"
   | "tariff:manage"
   | "billing:read"
@@ -86,7 +88,7 @@ const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
     "note:read", "discharge:read", "referral:read", "nursing:read", "surgery:read",
     "diet:read", "medication:read", "mar:read", "vitals:read", "bed:read", "diagnostic:read",
     "icu:read", "hd:read", "chemo:read", "form:read", "telemedicine:read",
-    "ikp:read", "device:read", "formulary:read", "tariff:read", "billing:read",
+    "ikp:read", "device:read", "formulary:read", "procurement:read", "tariff:read", "billing:read",
     "audit:read", "analytics:read", "user:read", "notification:read",
   ],
   manager: [
@@ -100,7 +102,7 @@ const TIER_PERMISSIONS: Record<RoleTier, Permission[]> = {
     "form:read", "form:submit", "form:manage",
     "telemedicine:read", "telemedicine:manage",
     "ikp:read", "ikp:report", "ikp:manage", "device:read",
-    "device:write", "formulary:read", "tariff:read", "tariff:manage", "billing:read",
+    "device:write", "formulary:read", "procurement:read", "tariff:read", "tariff:manage", "billing:read",
     "audit:read", "analytics:read", "user:read", "notification:read",
   ],
   doctor: [
@@ -144,10 +146,11 @@ const SUBROLE_OVERRIDES: Record<string, Permission[]> = {
   radiografer: ["diagnostic:read", "diagnostic:result"],
   "sp-radiologi": ["diagnostic:read", "diagnostic:result", "diagnostic:verify"],
   "ka-radiologi": ["diagnostic:read", "diagnostic:result", "diagnostic:verify"],
-  // Pharmacy — pharmacists review medication orders and dispense.
-  apoteker: ["formulary:read", "formulary:dispense", "medication:read"],
-  ttk: ["formulary:read", "formulary:dispense", "medication:read"],
-  "ka-farmasi": ["formulary:read", "formulary:dispense", "medication:read"],
+  // Pharmacy — pharmacists review medication orders, dispense, and run procurement
+  // (purchase orders + goods receipt into inventory).
+  apoteker: ["formulary:read", "formulary:dispense", "medication:read", "procurement:read", "procurement:manage"],
+  ttk: ["formulary:read", "formulary:dispense", "medication:read", "procurement:read", "procurement:manage"],
+  "ka-farmasi": ["formulary:read", "formulary:dispense", "medication:read", "procurement:read", "procurement:manage"],
   // Nutrition / dietetics — order and manage therapeutic diets; kitchen reads.
   "ahli-gizi": ["diet:read", "diet:write"],
   "ka-gizi": ["diet:read", "diet:write"],

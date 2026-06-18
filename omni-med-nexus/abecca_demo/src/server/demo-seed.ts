@@ -27,6 +27,7 @@ import { createCredential } from "./hr/credentials";
 import { recordCase, recordDenominator } from "./ppi/surveillance";
 import { recordInmEntry } from "./quality/inm";
 import { createItem, recordBatch } from "./pharmacy/inventory";
+import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
   collectSpecimen,
   createDiagnosticOrder,
@@ -326,6 +327,24 @@ export async function ensureDemoSeed(): Promise<void> {
     const rl = await createItem(DEMO_COMPANY_ID, { name: "Ringer Laktat 500 mL", unit: "botol", reorderPoint: 40 });
     await recordBatch(DEMO_COMPANY_ID, rl.id, { batchNo: "RL-2401", quantity: 18, expiryDate: cdays(-12) });    // kedaluwarsa
     await createItem(DEMO_COMPANY_ID, { name: "Insulin Glargine 100 IU/mL", unit: "pen", reorderPoint: 20 });    // habis (tanpa batch)
+
+    // Pengadaan — 1 PO terkirim & diterima sebagian (→ stok naik) + 1 PO masih draf.
+    const po1 = await createPurchaseOrder(DEMO_COMPANY_ID, {
+      supplier: "PT Kimia Farma",
+      note: "Pengadaan rutin triwulan",
+      lines: [
+        { itemId: pcm.id, quantity: 200, unitPrice: 250 },
+        { itemId: amx.id, quantity: 100, unitPrice: 1500 },
+      ],
+    });
+    if (po1) {
+      await setPoStatus(DEMO_COMPANY_ID, po1.id, "sent");
+      await receiveGoods(DEMO_COMPANY_ID, po1.id, { lineId: po1.lines[0].id, batchNo: "GR-PCM-01", quantity: 120, expiryDate: cdays(540) });
+    }
+    await createPurchaseOrder(DEMO_COMPANY_ID, {
+      supplier: "PT Enseval Putera Megatrading",
+      lines: [{ itemId: rl.id, quantity: 50, unitPrice: 8000 }],
+    });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
