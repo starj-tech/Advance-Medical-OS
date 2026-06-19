@@ -27,6 +27,7 @@ import { createCredential } from "./hr/credentials";
 import { recordCase, recordDenominator } from "./ppi/surveillance";
 import { recordInmEntry } from "./quality/inm";
 import { createRisk, updateRisk } from "./quality/risk-register";
+import { createPayer } from "./billing/payers";
 import { createItem, recordBatch } from "./pharmacy/inventory";
 import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
@@ -356,6 +357,11 @@ export async function ensureDemoSeed(): Promise<void> {
     await createRisk(DEMO_COMPANY_ID, { title: "Keluhan ketersediaan lahan parkir", category: "reputational", likelihood: 2, consequence: 1 });
     const rPower = await createRisk(DEMO_COMPANY_ID, { title: "Pemadaman listrik area rawat jalan", category: "operational", likelihood: 1, consequence: 3 });
     await updateRisk(DEMO_COMPANY_ID, rPower.id, { status: "closed" });
+
+    // Penjamin — campuran negara/mata uang utk demo revenue cycle global.
+    await createPayer(DEMO_COMPANY_ID, { name: "BPJS Kesehatan", payerType: "social_health_insurance", scheme: "casemix", currency: "IDR", coveragePercent: 100, eligibilityStatus: "eligible" });
+    await createPayer(DEMO_COMPANY_ID, { name: "Allianz Care International", payerType: "private_insurance", scheme: "fee_for_service", currency: "USD", coveragePercent: 80, deductible: 100, copay: 20, ceiling: 50000, eligibilityStatus: "eligible" });
+    await createPayer(DEMO_COMPANY_ID, { name: "Bayar Sendiri (Umum)", payerType: "self_pay", scheme: "fee_for_service", currency: "IDR", coveragePercent: 0, eligibilityStatus: "eligible" });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

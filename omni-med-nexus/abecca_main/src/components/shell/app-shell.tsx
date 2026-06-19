@@ -30,6 +30,7 @@ const titleKeys: Record<string, keyof Messages["nav"]> = {
   "/inventory": "inventory",
   "/procurement": "procurement",
   "/tariffs": "tariffs",
+  "/payers": "payers",
   "/safety": "safety",
   "/risk-register": "riskRegister",
   "/infection-control": "infectionControl",
