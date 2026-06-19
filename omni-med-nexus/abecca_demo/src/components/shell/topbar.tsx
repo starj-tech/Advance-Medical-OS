@@ -6,6 +6,8 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useSession } from "@/lib/use-session";
 import { NotificationBell } from "@/components/shell/notification-bell";
 import { DemoRoleSwitcher } from "@/components/demo/role-switcher";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { useT } from "@/components/i18n/i18n-provider";
 
 export function Topbar({
   title,
@@ -15,13 +17,14 @@ export function Topbar({
   onMenuClick?: () => void;
 }) {
   const { session } = useSession();
-  const displayName = session?.user.fullName ?? "Memuat…";
+  const t = useT("shell");
+  const displayName = session?.user.fullName ?? "…";
   const displaySub = session?.company.companyCode ?? "";
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
       <button
         type="button"
-        aria-label="Open menu"
+        aria-label={t("openMenu")}
         onClick={onMenuClick}
         className="-ml-1 grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground lg:hidden"
       >
@@ -35,13 +38,15 @@ export function Topbar({
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
-            placeholder="Search patients, codes…"
-            aria-label="Search"
+            placeholder={t("searchPlaceholder")}
+            aria-label={t("searchPlaceholder")}
             className="h-9 w-56 rounded-lg border border-border bg-surface pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/30"
           />
         </div>
 
         <DemoRoleSwitcher />
+
+        <LanguageSwitcher />
 
         <ThemeToggle />
 
