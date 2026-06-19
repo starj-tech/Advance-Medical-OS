@@ -1,19 +1,20 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { AcuityLevel } from "./types";
+import { formatMoney } from "./i18n";
 
 /** Tailwind-aware className combiner used by every UI primitive. */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Format an integer amount of Indonesian Rupiah (tariffs are stored in IDR). */
+/**
+ * Format an integer amount of Indonesian Rupiah. Thin wrapper over the locale-aware
+ * `formatMoney` (lib/i18n) so existing IDR call sites stay unchanged while new code can
+ * format any currency/locale. Multi-currency tenants should call `formatMoney` directly.
+ */
 export function formatIDR(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(amount);
+  return formatMoney(amount, { currency: "IDR", locale: "id" });
 }
 
 /** Compact number formatting for stock counts and metrics. */

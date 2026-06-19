@@ -5,50 +5,61 @@ import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { SidebarBrand, SidebarNav } from "./sidebar";
 import { Topbar } from "./topbar";
+import type { Messages } from "@/lib/messages";
+import { useT } from "@/components/i18n/i18n-provider";
 
-const titles: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/analytics": "Analitik Eksekutif",
-  "/copilot": "Abecca Copilot",
-  "/registration": "Pendaftaran & Antrian",
-  "/emergency": "IGD — Triase & Papan Lacak",
-  "/appointments": "Janji Temu",
-  "/telemedicine": "Telemedicine",
-  "/patients": "Patients",
-  "/beds": "Bed Board",
-  "/surgery": "Jadwal Operasi",
-  "/diagnostics": "Worklist Lab & Radiologi",
-  "/imaging": "Imaging / PACS",
-  "/special-care": "Unit Khusus",
-  "/forms": "Form Dinamis",
-  "/devices": "Devices",
-  "/formulary": "Formulary",
-  "/pharmacy": "Dispensing Farmasi",
-  "/inventory": "Inventory Farmasi",
-  "/procurement": "Pengadaan Farmasi",
-  "/tariffs": "Tariffs",
-  "/safety": "Keselamatan Pasien",
-  "/risk-register": "Manajemen Risiko",
-  "/infection-control": "PPI — Surveilans Infeksi",
-  "/quality-indicators": "Indikator Nasional Mutu",
-  "/credentials": "Kredensial Tenaga Kesehatan",
-  "/audit": "Audit Trail",
-  "/observability": "Observability",
-  "/integrations": "Integrasi & API Publik",
-  "/security": "Keamanan Akun",
+// Page title reuses the nav translation keys so titles localise with the sidebar.
+const titleKeys: Record<string, keyof Messages["nav"]> = {
+  "/dashboard": "dashboard",
+  "/analytics": "analytics",
+  "/copilot": "copilot",
+  "/registration": "registration",
+  "/emergency": "emergency",
+  "/appointments": "appointments",
+  "/telemedicine": "telemedicine",
+  "/patients": "patients",
+  "/beds": "beds",
+  "/surgery": "surgery",
+  "/diagnostics": "diagnostics",
+  "/imaging": "imaging",
+  "/special-care": "specialCare",
+  "/forms": "forms",
+  "/devices": "devices",
+  "/formulary": "formulary",
+  "/pharmacy": "pharmacy",
+  "/inventory": "inventory",
+  "/procurement": "procurement",
+  "/tariffs": "tariffs",
+  "/safety": "safety",
+  "/risk-register": "riskRegister",
+  "/infection-control": "infectionControl",
+  "/quality-indicators": "qualityIndicators",
+  "/credentials": "credentials",
+  "/audit": "audit",
+  "/observability": "observability",
+  "/integrations": "integrations",
+  "/security": "security",
 };
 
-function titleFor(pathname: string): string {
-  if (pathname.startsWith("/patients/")) return "Patient Record";
-  const key = Object.keys(titles).find(
+function navKeyFor(pathname: string): keyof Messages["nav"] | null {
+  const key = Object.keys(titleKeys).find(
     (k) => pathname === k || pathname.startsWith(`${k}/`),
   );
-  return key ? titles[key] : "Abecca";
+  return key ? titleKeys[key] : null;
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const tNav = useT("nav");
+  const tShell = useT("shell");
+
+  const navKey = navKeyFor(pathname);
+  const title = pathname.startsWith("/patients/")
+    ? tShell("patientRecord")
+    : navKey
+      ? tNav(navKey)
+      : "Abecca";
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -71,7 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <SidebarBrand />
               <button
                 type="button"
-                aria-label="Close menu"
+                aria-label={tShell("closeMenu")}
                 onClick={() => setMobileOpen(false)}
                 className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-foreground/5"
               >
@@ -85,7 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar title={titleFor(pathname)} onMenuClick={() => setMobileOpen(true)} />
+        <Topbar title={title} onMenuClick={() => setMobileOpen(true)} />
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>

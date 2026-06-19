@@ -35,46 +35,50 @@ import {
   Webhook,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { Messages } from "@/lib/messages";
+import { useT } from "@/components/i18n/i18n-provider";
 
-const nav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/analytics", label: "Analitik", icon: BarChart3 },
-  { href: "/copilot", label: "Copilot", icon: Sparkles },
-  { href: "/registration", label: "Pendaftaran", icon: ClipboardList },
-  { href: "/emergency", label: "IGD", icon: Siren },
-  { href: "/appointments", label: "Janji Temu", icon: CalendarClock },
-  { href: "/telemedicine", label: "Telemedicine", icon: Video },
-  { href: "/patients", label: "Patients", icon: Users },
-  { href: "/beds", label: "Bed Board", icon: BedDouble },
-  { href: "/surgery", label: "Operasi", icon: Scissors },
-  { href: "/diagnostics", label: "Lab & Radiologi", icon: FlaskConical },
-  { href: "/imaging", label: "Imaging / PACS", icon: Images },
-  { href: "/special-care", label: "Unit Khusus", icon: HeartPulse },
-  { href: "/forms", label: "Form Dinamis", icon: FileText },
-  { href: "/devices", label: "Devices", icon: Radio },
-  { href: "/formulary", label: "Formulary", icon: Pill },
-  { href: "/pharmacy", label: "Farmasi", icon: PackageCheck },
-  { href: "/inventory", label: "Inventory", icon: Boxes },
-  { href: "/procurement", label: "Pengadaan", icon: ShoppingCart },
-  { href: "/tariffs", label: "Tariffs", icon: Receipt },
-  { href: "/safety", label: "Keselamatan", icon: ShieldAlert },
-  { href: "/risk-register", label: "Manajemen Risiko", icon: Radar },
-  { href: "/infection-control", label: "PPI / Infeksi", icon: Bug },
-  { href: "/quality-indicators", label: "Indikator Mutu", icon: Target },
-  { href: "/credentials", label: "Kredensial Nakes", icon: BadgeCheck },
-  { href: "/audit", label: "Audit Trail", icon: ShieldCheck },
-  { href: "/observability", label: "Observability", icon: Gauge },
-  { href: "/integrations", label: "Integrasi", icon: Webhook },
-  { href: "/security", label: "Keamanan Akun", icon: KeyRound },
+const nav: { href: string; key: keyof Messages["nav"]; icon: typeof LayoutDashboard }[] = [
+  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { href: "/analytics", key: "analytics", icon: BarChart3 },
+  { href: "/copilot", key: "copilot", icon: Sparkles },
+  { href: "/registration", key: "registration", icon: ClipboardList },
+  { href: "/emergency", key: "emergency", icon: Siren },
+  { href: "/appointments", key: "appointments", icon: CalendarClock },
+  { href: "/telemedicine", key: "telemedicine", icon: Video },
+  { href: "/patients", key: "patients", icon: Users },
+  { href: "/beds", key: "beds", icon: BedDouble },
+  { href: "/surgery", key: "surgery", icon: Scissors },
+  { href: "/diagnostics", key: "diagnostics", icon: FlaskConical },
+  { href: "/imaging", key: "imaging", icon: Images },
+  { href: "/special-care", key: "specialCare", icon: HeartPulse },
+  { href: "/forms", key: "forms", icon: FileText },
+  { href: "/devices", key: "devices", icon: Radio },
+  { href: "/formulary", key: "formulary", icon: Pill },
+  { href: "/pharmacy", key: "pharmacy", icon: PackageCheck },
+  { href: "/inventory", key: "inventory", icon: Boxes },
+  { href: "/procurement", key: "procurement", icon: ShoppingCart },
+  { href: "/tariffs", key: "tariffs", icon: Receipt },
+  { href: "/safety", key: "safety", icon: ShieldAlert },
+  { href: "/risk-register", key: "riskRegister", icon: Radar },
+  { href: "/infection-control", key: "infectionControl", icon: Bug },
+  { href: "/quality-indicators", key: "qualityIndicators", icon: Target },
+  { href: "/credentials", key: "credentials", icon: BadgeCheck },
+  { href: "/audit", key: "audit", icon: ShieldCheck },
+  { href: "/observability", key: "observability", icon: Gauge },
+  { href: "/integrations", key: "integrations", icon: Webhook },
+  { href: "/security", key: "security", icon: KeyRound },
 ];
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const t = useT("nav");
+  const tShell = useT("shell");
 
   return (
     <nav className="flex flex-1 flex-col gap-1 px-3 py-4">
       <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Clinical
+        {tShell("clinical")}
       </p>
       {nav.map((item) => {
         const active =
@@ -102,7 +106,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               )}
               strokeWidth={2}
             />
-            {item.label}
+            {t(item.key)}
           </Link>
         );
       })}
@@ -110,7 +114,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       <div className="mt-auto px-3 pt-4">
         <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2.5 text-xs text-muted-foreground">
           <Activity className="size-4 text-primary" />
-          <span>Core engine: library mode</span>
+          <span>{tShell("coreEngine")}</span>
         </div>
       </div>
     </nav>
@@ -118,6 +122,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function SidebarBrand() {
+  const tShell = useT("shell");
   return (
     <Link href="/dashboard" className="flex items-center gap-2.5 px-5 py-4">
       <span className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground">
@@ -126,7 +131,7 @@ export function SidebarBrand() {
       <span className="flex flex-col leading-tight">
         <span className="text-sm font-semibold tracking-tight">Abecca</span>
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Clinical Portal
+          {tShell("brandTagline")}
         </span>
       </span>
     </Link>
