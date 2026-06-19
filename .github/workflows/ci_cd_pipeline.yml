@@ -67,6 +67,10 @@ jobs:
         working-directory: ./omni-med-nexus/${{ matrix.app }}
         run: npm run lint
 
+      - name: Test
+        working-directory: ./omni-med-nexus/${{ matrix.app }}
+        run: npm run test --if-present
+
       - name: Build
         working-directory: ./omni-med-nexus/${{ matrix.app }}
         run: npm run build

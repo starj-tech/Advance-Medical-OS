@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Tests run under Vitest (own config); keep them out of the Next lint/build path.
+    "tests/**",
   ]),
 ]);
 
