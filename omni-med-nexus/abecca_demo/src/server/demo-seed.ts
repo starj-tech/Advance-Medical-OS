@@ -30,6 +30,7 @@ import { createRisk, updateRisk } from "./quality/risk-register";
 import { createComplaint, updateComplaint } from "./quality/complaints";
 import { createFeedback } from "./quality/feedback";
 import { recordConsumption as recordAmrConsumption, recordPatientDays as recordAmrPatientDays } from "./ppi/antimicrobial";
+import { createStaff } from "./hr/staff-directory";
 import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
@@ -401,6 +402,16 @@ export async function ensureDemoSeed(): Promise<void> {
     await recordAmrConsumption(DEMO_COMPANY_ID, { period: amrPeriod, drugCode: "J01DH02", consumedGrams: 45 });  // Meropenem (Watch)
     await recordAmrConsumption(DEMO_COMPANY_ID, { period: amrPeriod, drugCode: "J01XX08", consumedGrams: 12 });  // Linezolid (Reserve)
     await recordAmrPatientDays(DEMO_COMPANY_ID, { period: amrPeriod, patientDays: 1800 });
+
+    // Direktori staf — campuran profesi/unit/status (aktif/cuti/nonaktif).
+    await createStaff(DEMO_COMPANY_ID, { name: "dr. Budi Santoso, Sp.PD", profession: "doctor", unit: "Poli Penyakit Dalam", phone: "0811-2001", email: "budi@rsdemo.id", status: "active" });
+    await createStaff(DEMO_COMPANY_ID, { name: "dr. Sari Wijaya", profession: "doctor", unit: "IGD", phone: "0811-2002", status: "active" });
+    await createStaff(DEMO_COMPANY_ID, { name: "Ns. Dewi Lestari", profession: "nurse", unit: "ICU", phone: "0811-2003", status: "active" });
+    await createStaff(DEMO_COMPANY_ID, { name: "Ns. Rudi Hartono", profession: "nurse", unit: "Rawat Inap Lt.3", status: "on_leave" });
+    await createStaff(DEMO_COMPANY_ID, { name: "Apt. Maya Putri", profession: "pharmacist", unit: "Farmasi", email: "maya@rsdemo.id", status: "active" });
+    await createStaff(DEMO_COMPANY_ID, { name: "Bidan Ani Rahma", profession: "midwife", unit: "VK / Bersalin", status: "active" });
+    await createStaff(DEMO_COMPANY_ID, { name: "Joko Susanto", profession: "lab", unit: "Laboratorium", status: "active" });
+    await createStaff(DEMO_COMPANY_ID, { name: "Tono Prabowo", profession: "radiographer", unit: "Radiologi", status: "inactive" });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

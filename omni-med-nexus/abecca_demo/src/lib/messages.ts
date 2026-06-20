@@ -14,7 +14,7 @@ export interface Messages {
     specialCare: string; forms: string; devices: string; formulary: string;
     pharmacy: string; inventory: string; procurement: string; stockTake: string; tariffs: string;
     payers: string; safety: string; riskRegister: string; consent: string; complaints: string; feedback: string; infectionControl: string;
-    antimicrobial: string; qualityIndicators: string; credentials: string; audit: string;
+    antimicrobial: string; qualityIndicators: string; credentials: string; staffDirectory: string; audit: string;
     observability: string; integrations: string; security: string;
   };
   shell: {
@@ -39,7 +39,7 @@ const id: Messages = {
     formulary: "Formularium", pharmacy: "Farmasi", inventory: "Inventory",
     procurement: "Pengadaan", stockTake: "Stok Opname", tariffs: "Tarif", payers: "Penjamin", safety: "Keselamatan",
     riskRegister: "Manajemen Risiko", consent: "Persetujuan", complaints: "Komplain", feedback: "Umpan Balik", infectionControl: "PPI / Infeksi",
-    antimicrobial: "Stewardship Antimikroba", qualityIndicators: "Indikator Mutu", credentials: "Kredensial Nakes",
+    antimicrobial: "Stewardship Antimikroba", qualityIndicators: "Indikator Mutu", credentials: "Kredensial Nakes", staffDirectory: "Direktori Staf",
     audit: "Audit Trail", observability: "Observability",
     integrations: "Integrasi", security: "Keamanan Akun",
   },
@@ -65,7 +65,7 @@ const en: Messages = {
     formulary: "Formulary", pharmacy: "Pharmacy", inventory: "Inventory",
     procurement: "Procurement", stockTake: "Stock-Take", tariffs: "Tariffs", payers: "Payers", safety: "Patient Safety",
     riskRegister: "Risk Management", consent: "Consent", complaints: "Complaints", feedback: "Feedback", infectionControl: "IPC / Infection",
-    antimicrobial: "Antimicrobial Stewardship", qualityIndicators: "Quality Indicators", credentials: "Staff Credentials",
+    antimicrobial: "Antimicrobial Stewardship", qualityIndicators: "Quality Indicators", credentials: "Staff Credentials", staffDirectory: "Staff Directory",
     audit: "Audit Trail", observability: "Observability",
     integrations: "Integrations", security: "Account Security",
   },
