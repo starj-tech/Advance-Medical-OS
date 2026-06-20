@@ -13,7 +13,7 @@ export interface Messages {
     beds: string; surgery: string; diagnostics: string; imaging: string;
     specialCare: string; forms: string; devices: string; formulary: string;
     pharmacy: string; inventory: string; procurement: string; stockTake: string; tariffs: string;
-    payers: string; safety: string; riskRegister: string; consent: string; complaints: string; infectionControl: string;
+    payers: string; safety: string; riskRegister: string; consent: string; complaints: string; feedback: string; infectionControl: string;
     qualityIndicators: string; credentials: string; audit: string;
     observability: string; integrations: string; security: string;
   };
@@ -38,7 +38,7 @@ const id: Messages = {
     specialCare: "Unit Khusus", forms: "Form Dinamis", devices: "Perangkat",
     formulary: "Formularium", pharmacy: "Farmasi", inventory: "Inventory",
     procurement: "Pengadaan", stockTake: "Stok Opname", tariffs: "Tarif", payers: "Penjamin", safety: "Keselamatan",
-    riskRegister: "Manajemen Risiko", consent: "Persetujuan", complaints: "Komplain", infectionControl: "PPI / Infeksi",
+    riskRegister: "Manajemen Risiko", consent: "Persetujuan", complaints: "Komplain", feedback: "Umpan Balik", infectionControl: "PPI / Infeksi",
     qualityIndicators: "Indikator Mutu", credentials: "Kredensial Nakes",
     audit: "Audit Trail", observability: "Observability",
     integrations: "Integrasi", security: "Keamanan Akun",
@@ -64,7 +64,7 @@ const en: Messages = {
     specialCare: "Special Care", forms: "Dynamic Forms", devices: "Devices",
     formulary: "Formulary", pharmacy: "Pharmacy", inventory: "Inventory",
     procurement: "Procurement", stockTake: "Stock-Take", tariffs: "Tariffs", payers: "Payers", safety: "Patient Safety",
-    riskRegister: "Risk Management", consent: "Consent", complaints: "Complaints", infectionControl: "IPC / Infection",
+    riskRegister: "Risk Management", consent: "Consent", complaints: "Complaints", feedback: "Feedback", infectionControl: "IPC / Infection",
     qualityIndicators: "Quality Indicators", credentials: "Staff Credentials",
     audit: "Audit Trail", observability: "Observability",
     integrations: "Integrations", security: "Account Security",

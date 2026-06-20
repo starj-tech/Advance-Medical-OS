@@ -28,6 +28,7 @@ import { recordCase, recordDenominator } from "./ppi/surveillance";
 import { recordInmEntry } from "./quality/inm";
 import { createRisk, updateRisk } from "./quality/risk-register";
 import { createComplaint, updateComplaint } from "./quality/complaints";
+import { createFeedback } from "./quality/feedback";
 import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
@@ -384,6 +385,13 @@ export async function ensureDemoSeed(): Promise<void> {
     await updateComplaint(DEMO_COMPANY_ID, cComm.id, { status: "resolved", resolution: "DPJP menjelaskan ulang jadwal & memberi kontak perawat." }); // selesai cepat → tepat waktu
     const cClin = await createComplaint(DEMO_COMPANY_ID, { patientId: PATIENTS[4], reporter: "Keluarga pasien", category: "clinical", severity: "high", subject: "Respon panggilan perawat lambat", createdAt: cdays(-10) });
     await updateComplaint(DEMO_COMPANY_ID, cClin.id, { status: "resolved", resolution: "Audit waktu respon + penambahan staf shift malam." }); // selesai lambat → terlambat
+
+    // Umpan balik pasien — survei NPS/CSAT campuran promotor/pasif/detraktor (NPS net positif).
+    await createFeedback(DEMO_COMPANY_ID, { patientId: PATIENTS[0], source: "post_visit", npsScore: 10, csatRating: 5, comment: "Dokter komunikatif, antrean cepat." });
+    await createFeedback(DEMO_COMPANY_ID, { patientId: PATIENTS[1], source: "discharge", npsScore: 9, csatRating: 5, comment: "Proses pulang rapi." });
+    await createFeedback(DEMO_COMPANY_ID, { patientId: PATIENTS[2], source: "digital", npsScore: 8, csatRating: 4 });
+    await createFeedback(DEMO_COMPANY_ID, { patientId: PATIENTS[3], source: "post_visit", npsScore: 6, csatRating: 3, comment: "Menunggu apotek cukup lama." });
+    await createFeedback(DEMO_COMPANY_ID, { source: "digital", npsScore: 9, csatRating: 5 });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
