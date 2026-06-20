@@ -28,6 +28,7 @@ import { recordCase, recordDenominator } from "./ppi/surveillance";
 import { recordInmEntry } from "./quality/inm";
 import { createRisk, updateRisk } from "./quality/risk-register";
 import { createPayer } from "./billing/payers";
+import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
 import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
@@ -362,6 +363,13 @@ export async function ensureDemoSeed(): Promise<void> {
     await createPayer(DEMO_COMPANY_ID, { name: "BPJS Kesehatan", payerType: "social_health_insurance", scheme: "casemix", currency: "IDR", coveragePercent: 100, eligibilityStatus: "eligible" });
     await createPayer(DEMO_COMPANY_ID, { name: "Allianz Care International", payerType: "private_insurance", scheme: "fee_for_service", currency: "USD", coveragePercent: 80, deductible: 100, copay: 20, ceiling: 50000, eligibilityStatus: "eligible" });
     await createPayer(DEMO_COMPANY_ID, { name: "Bayar Sendiri (Umum)", payerType: "self_pay", scheme: "fee_for_service", currency: "IDR", coveragePercent: 0, eligibilityStatus: "eligible" });
+
+    // Persetujuan (informed consent) — campuran berlaku / kedaluwarsa / dicabut.
+    await recordConsent(DEMO_COMPANY_ID, { patientId: PATIENTS[0], consentType: "general_treatment", grantor: "Pasien", relationship: "Pasien" });
+    await recordConsent(DEMO_COMPANY_ID, { patientId: PATIENTS[1], consentType: "surgery", grantor: "Tn. Budi", relationship: "Suami", validUntil: cdays(30) });
+    await recordConsent(DEMO_COMPANY_ID, { patientId: PATIENTS[2], consentType: "anesthesia", grantor: "Pasien", relationship: "Pasien", validUntil: cdays(-5) }); // kedaluwarsa
+    const cShare = await recordConsent(DEMO_COMPANY_ID, { patientId: PATIENTS[0], consentType: "data_sharing", grantor: "Pasien", relationship: "Pasien" });
+    await withdrawConsent(DEMO_COMPANY_ID, cShare.id); // dicabut
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
