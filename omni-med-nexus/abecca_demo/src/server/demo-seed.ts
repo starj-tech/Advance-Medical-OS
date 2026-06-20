@@ -29,6 +29,7 @@ import { recordInmEntry } from "./quality/inm";
 import { createRisk, updateRisk } from "./quality/risk-register";
 import { createComplaint, updateComplaint } from "./quality/complaints";
 import { createFeedback } from "./quality/feedback";
+import { recordConsumption as recordAmrConsumption, recordPatientDays as recordAmrPatientDays } from "./ppi/antimicrobial";
 import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
@@ -392,6 +393,14 @@ export async function ensureDemoSeed(): Promise<void> {
     await createFeedback(DEMO_COMPANY_ID, { patientId: PATIENTS[2], source: "digital", npsScore: 8, csatRating: 4 });
     await createFeedback(DEMO_COMPANY_ID, { patientId: PATIENTS[3], source: "post_visit", npsScore: 6, csatRating: 3, comment: "Menunggu apotek cukup lama." });
     await createFeedback(DEMO_COMPANY_ID, { source: "digital", npsScore: 9, csatRating: 5 });
+
+    // Stewardship antimikroba (PPRA) — konsumsi bulan berjalan + denominator hari-pasien (AWaRe campuran).
+    const amrPeriod = new Date().toISOString().slice(0, 7);
+    await recordAmrConsumption(DEMO_COMPANY_ID, { period: amrPeriod, drugCode: "J01CA04", consumedGrams: 180 }); // Amoksisilin (Access)
+    await recordAmrConsumption(DEMO_COMPANY_ID, { period: amrPeriod, drugCode: "J01DD04", consumedGrams: 120 }); // Seftriakson (Watch)
+    await recordAmrConsumption(DEMO_COMPANY_ID, { period: amrPeriod, drugCode: "J01DH02", consumedGrams: 45 });  // Meropenem (Watch)
+    await recordAmrConsumption(DEMO_COMPANY_ID, { period: amrPeriod, drugCode: "J01XX08", consumedGrams: 12 });  // Linezolid (Reserve)
+    await recordAmrPatientDays(DEMO_COMPANY_ID, { period: amrPeriod, patientDays: 1800 });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

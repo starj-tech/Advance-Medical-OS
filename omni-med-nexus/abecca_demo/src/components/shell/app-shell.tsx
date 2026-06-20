@@ -39,6 +39,7 @@ const titleKeys: Record<string, keyof Messages["nav"]> = {
   "/complaints": "complaints",
   "/feedback": "feedback",
   "/infection-control": "infectionControl",
+  "/antimicrobial": "antimicrobial",
   "/quality-indicators": "qualityIndicators",
   "/credentials": "credentials",
   "/audit": "audit",
