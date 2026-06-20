@@ -27,6 +27,7 @@ import { createCredential } from "./hr/credentials";
 import { recordCase, recordDenominator } from "./ppi/surveillance";
 import { recordInmEntry } from "./quality/inm";
 import { createRisk, updateRisk } from "./quality/risk-register";
+import { createComplaint, updateComplaint } from "./quality/complaints";
 import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
@@ -373,6 +374,16 @@ export async function ensureDemoSeed(): Promise<void> {
     await recordConsent(DEMO_COMPANY_ID, { patientId: PATIENTS[2], consentType: "anesthesia", grantor: "Pasien", relationship: "Pasien", validUntil: cdays(-5) }); // kedaluwarsa
     const cShare = await recordConsent(DEMO_COMPANY_ID, { patientId: PATIENTS[0], consentType: "data_sharing", grantor: "Pasien", relationship: "Pasien" });
     await withdrawConsent(DEMO_COMPANY_ID, cShare.id); // dicabut
+
+    // Komplain pasien — campuran kategori/keparahan & status SLA (backdate utk demo overdue/breached).
+    await createComplaint(DEMO_COMPANY_ID, { patientId: PATIENTS[3], reporter: "Keluarga pasien", category: "service", severity: "high", subject: "Antrian pendaftaran lebih dari 2 jam", description: "Pasien lansia menunggu lama tanpa kejelasan.", createdAt: cdays(-4) }); // terbuka, lewat target
+    await createComplaint(DEMO_COMPANY_ID, { patientId: PATIENTS[1], reporter: "Pasien", category: "billing", severity: "medium", subject: "Rincian tagihan tidak jelas" }); // baru → sesuai target
+    const cFacility = await createComplaint(DEMO_COMPANY_ID, { reporter: "Pengunjung", category: "facility", severity: "low", subject: "Toilet lantai 2 kotor", createdAt: cdays(-1) });
+    await updateComplaint(DEMO_COMPANY_ID, cFacility.id, { status: "in_progress", assignedTo: "Tim Kebersihan" });
+    const cComm = await createComplaint(DEMO_COMPANY_ID, { patientId: PATIENTS[2], reporter: "Pasien", category: "communication", severity: "medium", subject: "Kurang informasi jadwal operasi", createdAt: cdays(-1) });
+    await updateComplaint(DEMO_COMPANY_ID, cComm.id, { status: "resolved", resolution: "DPJP menjelaskan ulang jadwal & memberi kontak perawat." }); // selesai cepat → tepat waktu
+    const cClin = await createComplaint(DEMO_COMPANY_ID, { patientId: PATIENTS[4], reporter: "Keluarga pasien", category: "clinical", severity: "high", subject: "Respon panggilan perawat lambat", createdAt: cdays(-10) });
+    await updateComplaint(DEMO_COMPANY_ID, cClin.id, { status: "resolved", resolution: "Audit waktu respon + penambahan staf shift malam." }); // selesai lambat → terlambat
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
