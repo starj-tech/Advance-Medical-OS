@@ -105,6 +105,16 @@ export async function listBatches(companyId: string, itemId: string): Promise<In
   return batches.filter((b) => b.companyId === companyId && b.itemId === itemId).sort((a, b) => a.expiryDate.localeCompare(b.expiryDate));
 }
 
+/** Fetch a single batch by id, tenant-scoped (used by stock-take to snapshot on-hand). */
+export async function getBatch(companyId: string, batchId: string): Promise<InventoryBatch | undefined> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data } = await sb.from("inventory_batches").select("*").eq("company_id", companyId).eq("id", batchId).maybeSingle();
+    return data ? toBatch(data as BatchRow) : undefined;
+  }
+  return batches.find((b) => b.companyId === companyId && b.id === batchId);
+}
+
 /** Set a batch's on-hand quantity (dispense, wastage, stock-take). Clamped ≥ 0. */
 export async function setBatchQuantity(companyId: string, batchId: string, quantity: number): Promise<InventoryBatch | undefined> {
   const q = Math.max(0, Math.floor(quantity));

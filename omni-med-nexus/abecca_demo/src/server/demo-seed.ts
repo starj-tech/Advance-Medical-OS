@@ -30,6 +30,7 @@ import { createRisk, updateRisk } from "./quality/risk-register";
 import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
+import { recordStockTake } from "./pharmacy/stock-take";
 import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
   collectSpecimen,
@@ -326,7 +327,9 @@ export async function ensureDemoSeed(): Promise<void> {
     await recordBatch(DEMO_COMPANY_ID, pcm.id, { batchNo: "BPC-2405", quantity: 500, expiryDate: cdays(400) }); // aman
     await recordBatch(DEMO_COMPANY_ID, pcm.id, { batchNo: "BPC-2312", quantity: 80, expiryDate: cdays(60) });   // segera kedaluwarsa
     const amx = await createItem(DEMO_COMPANY_ID, { name: "Amoksisilin 500 mg", unit: "kapsul", reorderPoint: 50 });
-    await recordBatch(DEMO_COMPANY_ID, amx.id, { batchNo: "AMX-2403", quantity: 30, expiryDate: cdays(150) });  // stok rendah (≤reorder)
+    const amxBatch = await recordBatch(DEMO_COMPANY_ID, amx.id, { batchNo: "AMX-2403", quantity: 30, expiryDate: cdays(150) });  // stok rendah (≤reorder)
+    // Stok opname — satu selisih (kurang) tercatat, belum diterapkan.
+    if (amxBatch) await recordStockTake(DEMO_COMPANY_ID, amxBatch.id, { countedQty: 28, note: "selisih 2 (rusak)" });
     const rl = await createItem(DEMO_COMPANY_ID, { name: "Ringer Laktat 500 mL", unit: "botol", reorderPoint: 40 });
     await recordBatch(DEMO_COMPANY_ID, rl.id, { batchNo: "RL-2401", quantity: 18, expiryDate: cdays(-12) });    // kedaluwarsa
     await createItem(DEMO_COMPANY_ID, { name: "Insulin Glargine 100 IU/mL", unit: "pen", reorderPoint: 20 });    // habis (tanpa batch)

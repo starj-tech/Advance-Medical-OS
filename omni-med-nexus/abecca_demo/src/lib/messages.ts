@@ -12,7 +12,7 @@ export interface Messages {
     emergency: string; appointments: string; telemedicine: string; patients: string;
     beds: string; surgery: string; diagnostics: string; imaging: string;
     specialCare: string; forms: string; devices: string; formulary: string;
-    pharmacy: string; inventory: string; procurement: string; tariffs: string;
+    pharmacy: string; inventory: string; procurement: string; stockTake: string; tariffs: string;
     payers: string; safety: string; riskRegister: string; consent: string; infectionControl: string;
     qualityIndicators: string; credentials: string; audit: string;
     observability: string; integrations: string; security: string;
@@ -37,7 +37,7 @@ const id: Messages = {
     surgery: "Operasi", diagnostics: "Lab & Radiologi", imaging: "Imaging / PACS",
     specialCare: "Unit Khusus", forms: "Form Dinamis", devices: "Perangkat",
     formulary: "Formularium", pharmacy: "Farmasi", inventory: "Inventory",
-    procurement: "Pengadaan", tariffs: "Tarif", payers: "Penjamin", safety: "Keselamatan",
+    procurement: "Pengadaan", stockTake: "Stok Opname", tariffs: "Tarif", payers: "Penjamin", safety: "Keselamatan",
     riskRegister: "Manajemen Risiko", consent: "Persetujuan", infectionControl: "PPI / Infeksi",
     qualityIndicators: "Indikator Mutu", credentials: "Kredensial Nakes",
     audit: "Audit Trail", observability: "Observability",
@@ -63,7 +63,7 @@ const en: Messages = {
     surgery: "Surgery", diagnostics: "Lab & Radiology", imaging: "Imaging / PACS",
     specialCare: "Special Care", forms: "Dynamic Forms", devices: "Devices",
     formulary: "Formulary", pharmacy: "Pharmacy", inventory: "Inventory",
-    procurement: "Procurement", tariffs: "Tariffs", payers: "Payers", safety: "Patient Safety",
+    procurement: "Procurement", stockTake: "Stock-Take", tariffs: "Tariffs", payers: "Payers", safety: "Patient Safety",
     riskRegister: "Risk Management", consent: "Consent", infectionControl: "IPC / Infection",
     qualityIndicators: "Quality Indicators", credentials: "Staff Credentials",
     audit: "Audit Trail", observability: "Observability",
