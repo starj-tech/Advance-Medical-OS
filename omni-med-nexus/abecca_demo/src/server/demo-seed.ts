@@ -32,6 +32,7 @@ import { createFeedback } from "./quality/feedback";
 import { recordConsumption as recordAmrConsumption, recordPatientDays as recordAmrPatientDays } from "./ppi/antimicrobial";
 import { createStaff } from "./hr/staff-directory";
 import { createPrivilege } from "./hr/privileging";
+import { createShift } from "./hr/rostering";
 import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
@@ -422,6 +423,17 @@ export async function ensureDemoSeed(): Promise<void> {
     await createPrivilege(DEMO_COMPANY_ID, { staffName: "Bidan Ani Rahma", category: "obstetric", privilege: "Pertolongan persalinan normal", status: "granted", reviewBy: privPast }); // → kedaluwarsa
     await createPrivilege(DEMO_COMPANY_ID, { staffName: "Ns. Dewi Lestari", category: "nursing", privilege: "Pemasangan kateter vena sentral (asistensi)", status: "requested" });
     await createPrivilege(DEMO_COMPANY_ID, { staffName: "dr. Budi Santoso, Sp.PD", category: "diagnostic", privilege: "USG abdomen bedside", status: "suspended", notes: "Menunggu re-asesmen kompetensi." });
+
+    // Jadwal jaga — shift beberapa hari ke depan, beragam unit/jenis (beban kerja terlihat).
+    const d0 = new Date().toISOString().slice(0, 10);
+    const d1 = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    const d2 = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10);
+    await createShift(DEMO_COMPANY_ID, { staffName: "Ns. Dewi Lestari", unit: "ICU", shiftType: "morning", date: d0 });
+    await createShift(DEMO_COMPANY_ID, { staffName: "Ns. Rudi Hartono", unit: "ICU", shiftType: "night", date: d0 });
+    await createShift(DEMO_COMPANY_ID, { staffName: "dr. Sari Wijaya", unit: "IGD", shiftType: "on_call", date: d0 });
+    await createShift(DEMO_COMPANY_ID, { staffName: "Ns. Dewi Lestari", unit: "ICU", shiftType: "afternoon", date: d1 });
+    await createShift(DEMO_COMPANY_ID, { staffName: "Bidan Ani Rahma", unit: "VK / Bersalin", shiftType: "morning", date: d1 });
+    await createShift(DEMO_COMPANY_ID, { staffName: "dr. Sari Wijaya", unit: "IGD", shiftType: "night", date: d2 });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
