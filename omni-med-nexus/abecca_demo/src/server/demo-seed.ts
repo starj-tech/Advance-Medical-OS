@@ -35,6 +35,7 @@ import { createPrivilege } from "./hr/privileging";
 import { createShift } from "./hr/rostering";
 import { createAsset } from "./biomedical/assets";
 import { createTicket as createHelpdeskTicket, updateTicket as updateHelpdeskTicket } from "./it/helpdesk";
+import { createContract } from "./procurement/contracts";
 import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
@@ -456,6 +457,14 @@ export async function ensureDemoSeed(): Promise<void> {
     await createHelpdeskTicket(DEMO_COMPANY_ID, { reporter: "Pendaftaran", category: "account", priority: "low", subject: "Reset password akun SIMRS" });
     const tPrn = await createHelpdeskTicket(DEMO_COMPANY_ID, { reporter: "Farmasi", category: "hardware", priority: "medium", subject: "Printer label obat macet" });
     await updateHelpdeskTicket(DEMO_COMPANY_ID, tPrn.id, { status: "resolved", assignedTo: "Teknisi-2", resolution: "Bersihkan roller + ganti pita." });
+
+    // Vendor & kontrak — masa berlaku campuran (berlaku/segera berakhir/kedaluwarsa/diakhiri).
+    const cdate = (d: number) => new Date(Date.now() + d * 86_400_000).toISOString().slice(0, 10);
+    await createContract(DEMO_COMPANY_ID, { vendor: "PT Sysmex Indonesia", title: "Maintenance analyzer hematologi", type: "maintenance", value: 180_000_000, startDate: cdate(-300), endDate: cdate(40) }); // segera berakhir
+    await createContract(DEMO_COMPANY_ID, { vendor: "PT Aneka Gas Industri", title: "Suplai oksigen cair (bulanan)", type: "supply", value: 240_000_000, startDate: cdate(-200), endDate: cdate(400) }); // berlaku
+    await createContract(DEMO_COMPANY_ID, { vendor: "PT Telkom", title: "Internet dedicated 200 Mbps", type: "service", value: 72_000_000, startDate: cdate(-380), endDate: cdate(-15) }); // kedaluwarsa
+    await createContract(DEMO_COMPANY_ID, { vendor: "PT SIMRS Nusantara", title: "Lisensi & dukungan SIMRS tahunan", type: "license", value: 350_000_000, startDate: cdate(-100), endDate: cdate(265) }); // berlaku
+    await createContract(DEMO_COMPANY_ID, { vendor: "CV Bersih Sehat", title: "Jasa kebersihan (outsourcing)", type: "service", value: 480_000_000, startDate: cdate(-500), endDate: cdate(-60), status: "terminated", notes: "Tidak diperpanjang — pindah vendor." });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
