@@ -31,6 +31,7 @@ import { createComplaint, updateComplaint } from "./quality/complaints";
 import { createFeedback } from "./quality/feedback";
 import { recordConsumption as recordAmrConsumption, recordPatientDays as recordAmrPatientDays } from "./ppi/antimicrobial";
 import { createStaff } from "./hr/staff-directory";
+import { createPrivilege } from "./hr/privileging";
 import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
@@ -412,6 +413,15 @@ export async function ensureDemoSeed(): Promise<void> {
     await createStaff(DEMO_COMPANY_ID, { name: "Bidan Ani Rahma", profession: "midwife", unit: "VK / Bersalin", status: "active" });
     await createStaff(DEMO_COMPANY_ID, { name: "Joko Susanto", profession: "lab", unit: "Laboratorium", status: "active" });
     await createStaff(DEMO_COMPANY_ID, { name: "Tono Prabowo", profession: "radiographer", unit: "Radiologi", status: "inactive" });
+
+    // Kewenangan klinis (RKK) — campuran diajukan/disetujui/ditangguhkan + satu lewat-tinjau (→ kedaluwarsa).
+    const privReview = new Date(Date.now() + 180 * 86_400_000).toISOString().slice(0, 10); // ~6 bln lagi
+    const privPast = new Date(Date.now() - 10 * 86_400_000).toISOString().slice(0, 10);    // sudah lewat
+    await createPrivilege(DEMO_COMPANY_ID, { staffName: "dr. Budi Santoso, Sp.PD", category: "medical", privilege: "Pungsi pleura", status: "granted", reviewBy: privReview });
+    await createPrivilege(DEMO_COMPANY_ID, { staffName: "dr. Sari Wijaya", category: "medical", privilege: "Intubasi endotrakeal IGD", status: "granted", reviewBy: privReview });
+    await createPrivilege(DEMO_COMPANY_ID, { staffName: "Bidan Ani Rahma", category: "obstetric", privilege: "Pertolongan persalinan normal", status: "granted", reviewBy: privPast }); // → kedaluwarsa
+    await createPrivilege(DEMO_COMPANY_ID, { staffName: "Ns. Dewi Lestari", category: "nursing", privilege: "Pemasangan kateter vena sentral (asistensi)", status: "requested" });
+    await createPrivilege(DEMO_COMPANY_ID, { staffName: "dr. Budi Santoso, Sp.PD", category: "diagnostic", privilege: "USG abdomen bedside", status: "suspended", notes: "Menunggu re-asesmen kompetensi." });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
