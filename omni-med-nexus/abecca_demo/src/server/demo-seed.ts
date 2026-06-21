@@ -34,6 +34,7 @@ import { createStaff } from "./hr/staff-directory";
 import { createPrivilege } from "./hr/privileging";
 import { createShift } from "./hr/rostering";
 import { createAsset } from "./biomedical/assets";
+import { createTicket as createHelpdeskTicket, updateTicket as updateHelpdeskTicket } from "./it/helpdesk";
 import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
@@ -446,6 +447,15 @@ export async function ensureDemoSeed(): Promise<void> {
     await createAsset(DEMO_COMPANY_ID, { name: "Infusion Pump Terumo", category: "other", location: "Rawat Inap Lt.3", status: "maintenance", nextDue: calOver, notes: "Tunggu suku cadang." });
     await createAsset(DEMO_COMPANY_ID, { name: "USG Mindray DC-70", category: "imaging", location: "Poli Kebidanan", serialNo: "DC70-9", nextDue: calOk });
     await createAsset(DEMO_COMPANY_ID, { name: "Autoclave Tuttnauer", category: "sterilization", location: "CSSD", status: "broken", notes: "Sensor suhu error — tanpa jadwal." });
+
+    // Helpdesk TI — tiket campuran status/prioritas; satu kritis lama (lewat respon SLA).
+    const hoursAgo = (h: number) => new Date(Date.now() - h * 3_600_000).toISOString();
+    await createHelpdeskTicket(DEMO_COMPANY_ID, { reporter: "Perawat ICU", category: "hardware", priority: "critical", subject: "Monitor pasien ICU-3 mati total", description: "Layar gelap, tidak menyala.", createdAt: hoursAgo(3) }); // kritis, baru, lewat 1 jam
+    const tNet = await createHelpdeskTicket(DEMO_COMPANY_ID, { reporter: "Lab", category: "network", priority: "high", subject: "Koneksi LIS ke analyzer putus" });
+    await updateHelpdeskTicket(DEMO_COMPANY_ID, tNet.id, { status: "in_progress", assignedTo: "Teknisi Jaringan" });
+    await createHelpdeskTicket(DEMO_COMPANY_ID, { reporter: "Pendaftaran", category: "account", priority: "low", subject: "Reset password akun SIMRS" });
+    const tPrn = await createHelpdeskTicket(DEMO_COMPANY_ID, { reporter: "Farmasi", category: "hardware", priority: "medium", subject: "Printer label obat macet" });
+    await updateHelpdeskTicket(DEMO_COMPANY_ID, tPrn.id, { status: "resolved", assignedTo: "Teknisi-2", resolution: "Bersihkan roller + ganti pita." });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

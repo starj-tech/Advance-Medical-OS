@@ -11,7 +11,7 @@ export interface Messages {
     dashboard: string; analytics: string; copilot: string; registration: string;
     emergency: string; appointments: string; telemedicine: string; patients: string;
     beds: string; surgery: string; diagnostics: string; imaging: string;
-    specialCare: string; forms: string; devices: string; biomedical: string; formulary: string;
+    specialCare: string; forms: string; devices: string; biomedical: string; helpdesk: string; formulary: string;
     pharmacy: string; inventory: string; procurement: string; stockTake: string; tariffs: string;
     payers: string; safety: string; riskRegister: string; consent: string; complaints: string; feedback: string; infectionControl: string;
     antimicrobial: string; qualityIndicators: string; credentials: string; staffDirectory: string; privileging: string; roster: string; audit: string;
@@ -35,7 +35,7 @@ const id: Messages = {
     registration: "Pendaftaran", emergency: "IGD", appointments: "Janji Temu",
     telemedicine: "Telemedicine", patients: "Pasien", beds: "Papan Bed",
     surgery: "Operasi", diagnostics: "Lab & Radiologi", imaging: "Imaging / PACS",
-    specialCare: "Unit Khusus", forms: "Form Dinamis", devices: "Perangkat", biomedical: "Aset Biomedik",
+    specialCare: "Unit Khusus", forms: "Form Dinamis", devices: "Perangkat", biomedical: "Aset Biomedik", helpdesk: "Helpdesk TI",
     formulary: "Formularium", pharmacy: "Farmasi", inventory: "Inventory",
     procurement: "Pengadaan", stockTake: "Stok Opname", tariffs: "Tarif", payers: "Penjamin", safety: "Keselamatan",
     riskRegister: "Manajemen Risiko", consent: "Persetujuan", complaints: "Komplain", feedback: "Umpan Balik", infectionControl: "PPI / Infeksi",
@@ -61,7 +61,7 @@ const en: Messages = {
     registration: "Registration", emergency: "Emergency", appointments: "Appointments",
     telemedicine: "Telemedicine", patients: "Patients", beds: "Bed Board",
     surgery: "Surgery", diagnostics: "Lab & Radiology", imaging: "Imaging / PACS",
-    specialCare: "Special Care", forms: "Dynamic Forms", devices: "Devices", biomedical: "Biomedical Assets",
+    specialCare: "Special Care", forms: "Dynamic Forms", devices: "Devices", biomedical: "Biomedical Assets", helpdesk: "IT Helpdesk",
     formulary: "Formulary", pharmacy: "Pharmacy", inventory: "Inventory",
     procurement: "Procurement", stockTake: "Stock-Take", tariffs: "Tariffs", payers: "Payers", safety: "Patient Safety",
     riskRegister: "Risk Management", consent: "Consent", complaints: "Complaints", feedback: "Feedback", infectionControl: "IPC / Infection",
