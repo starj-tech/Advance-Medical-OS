@@ -42,6 +42,7 @@ import {
   ShieldCheck,
   Users,
   Webhook,
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Messages } from "@/lib/messages";
@@ -63,6 +64,7 @@ const nav: { href: string; key: keyof Messages["nav"]; icon: typeof LayoutDashbo
   { href: "/special-care", key: "specialCare", icon: HeartPulse },
   { href: "/forms", key: "forms", icon: FileText },
   { href: "/devices", key: "devices", icon: Radio },
+  { href: "/biomedical", key: "biomedical", icon: Wrench },
   { href: "/formulary", key: "formulary", icon: Pill },
   { href: "/pharmacy", key: "pharmacy", icon: PackageCheck },
   { href: "/inventory", key: "inventory", icon: Boxes },

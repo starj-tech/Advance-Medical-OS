@@ -33,6 +33,7 @@ import { recordConsumption as recordAmrConsumption, recordPatientDays as recordA
 import { createStaff } from "./hr/staff-directory";
 import { createPrivilege } from "./hr/privileging";
 import { createShift } from "./hr/rostering";
+import { createAsset } from "./biomedical/assets";
 import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
@@ -434,6 +435,17 @@ export async function ensureDemoSeed(): Promise<void> {
     await createShift(DEMO_COMPANY_ID, { staffName: "Ns. Dewi Lestari", unit: "ICU", shiftType: "afternoon", date: d1 });
     await createShift(DEMO_COMPANY_ID, { staffName: "Bidan Ani Rahma", unit: "VK / Bersalin", shiftType: "morning", date: d1 });
     await createShift(DEMO_COMPANY_ID, { staffName: "dr. Sari Wijaya", unit: "IGD", shiftType: "night", date: d2 });
+
+    // Aset biomedik (IPSRS) — jadwal kalibrasi campuran terkalibrasi/segera/lewat tempo.
+    const calOk = new Date(Date.now() + 120 * 86_400_000).toISOString().slice(0, 10);
+    const calSoon = new Date(Date.now() + 20 * 86_400_000).toISOString().slice(0, 10);
+    const calOver = new Date(Date.now() - 15 * 86_400_000).toISOString().slice(0, 10);
+    await createAsset(DEMO_COMPANY_ID, { name: "Ventilator Hamilton C6", category: "life_support", location: "ICU Bed 1", serialNo: "HM-C6-0421", nextDue: calSoon });
+    await createAsset(DEMO_COMPANY_ID, { name: "Defibrillator Zoll R", category: "life_support", location: "IGD Resusitasi", serialNo: "ZOLL-R-118", nextDue: calOver });
+    await createAsset(DEMO_COMPANY_ID, { name: "Patient Monitor Mindray", category: "monitoring", location: "HCU", serialNo: "MR-N12-77", nextDue: calOk });
+    await createAsset(DEMO_COMPANY_ID, { name: "Infusion Pump Terumo", category: "other", location: "Rawat Inap Lt.3", status: "maintenance", nextDue: calOver, notes: "Tunggu suku cadang." });
+    await createAsset(DEMO_COMPANY_ID, { name: "USG Mindray DC-70", category: "imaging", location: "Poli Kebidanan", serialNo: "DC70-9", nextDue: calOk });
+    await createAsset(DEMO_COMPANY_ID, { name: "Autoclave Tuttnauer", category: "sterilization", location: "CSSD", status: "broken", notes: "Sensor suhu error — tanpa jadwal." });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
