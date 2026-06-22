@@ -41,6 +41,7 @@ import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
 import { transferStock } from "./pharmacy/stock-transfer";
 import { issueRecall } from "./pharmacy/recall";
+import { recordAssessment } from "./clinical/nursing-assessments";
 import { recordStockTake } from "./pharmacy/stock-take";
 import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
@@ -473,6 +474,12 @@ export async function ensureDemoSeed(): Promise<void> {
 
     // Penarikan obat — recall terbuka lot BPC-2405 yg kini tersebar di Gudang Pusat + Depo IGD (telusur lintas-depo).
     await issueRecall(DEMO_COMPANY_ID, { lotNo: "BPC-2405", reason: "Recall BPOM — dugaan cemaran nitrosamin" });
+
+    // Asesmen risiko keperawatan — Morse (risiko tinggi) & Braden (risiko sedang) utk sasaran keselamatan pasien.
+    await recordAssessment(DEMO_COMPANY_ID, { patientId: "PAT-123", patientName: "Andi Wijaya", scale: "morse",
+      items: { historyOfFalling: true, secondaryDiagnosis: true, ambulatoryAid: "crutches", ivTherapy: true, gait: "weak", mentalStatus: "oriented" } }); // skor 85 → tinggi
+    await recordAssessment(DEMO_COMPANY_ID, { patientId: "PAT-204", patientName: "Siti Rahmawati", scale: "braden",
+      items: { sensoryPerception: 3, moisture: 2, activity: 2, mobility: 3, nutrition: 2, frictionShear: 2 } }); // skor 14 → sedang
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
