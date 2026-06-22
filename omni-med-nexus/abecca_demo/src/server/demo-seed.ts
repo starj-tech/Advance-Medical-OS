@@ -40,6 +40,7 @@ import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
 import { transferStock } from "./pharmacy/stock-transfer";
+import { issueRecall } from "./pharmacy/recall";
 import { recordStockTake } from "./pharmacy/stock-take";
 import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
@@ -469,6 +470,9 @@ export async function ensureDemoSeed(): Promise<void> {
 
     // Transfer stok antar-depo — distribusi Paracetamol dari Gudang Pusat ke Depo IGD (stok kekal).
     if (pcmBatch) await transferStock(DEMO_COMPANY_ID, { fromBatchId: pcmBatch.id, toLocation: "Depo IGD", quantity: 150 });
+
+    // Penarikan obat — recall terbuka lot BPC-2405 yg kini tersebar di Gudang Pusat + Depo IGD (telusur lintas-depo).
+    await issueRecall(DEMO_COMPANY_ID, { lotNo: "BPC-2405", reason: "Recall BPOM — dugaan cemaran nitrosamin" });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

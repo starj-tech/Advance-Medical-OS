@@ -12,7 +12,7 @@ export interface Messages {
     emergency: string; appointments: string; telemedicine: string; patients: string;
     beds: string; surgery: string; diagnostics: string; imaging: string;
     specialCare: string; forms: string; devices: string; biomedical: string; helpdesk: string; contracts: string; formulary: string;
-    pharmacy: string; inventory: string; procurement: string; stockTake: string; stockTransfer: string; tariffs: string;
+    pharmacy: string; inventory: string; procurement: string; stockTake: string; stockTransfer: string; recall: string; tariffs: string;
     payers: string; safety: string; riskRegister: string; consent: string; complaints: string; feedback: string; infectionControl: string;
     antimicrobial: string; qualityIndicators: string; credentials: string; staffDirectory: string; privileging: string; roster: string; audit: string;
     observability: string; integrations: string; security: string;
@@ -37,7 +37,7 @@ const id: Messages = {
     surgery: "Operasi", diagnostics: "Lab & Radiologi", imaging: "Imaging / PACS",
     specialCare: "Unit Khusus", forms: "Form Dinamis", devices: "Perangkat", biomedical: "Aset Biomedik", helpdesk: "Helpdesk TI", contracts: "Vendor & Kontrak",
     formulary: "Formularium", pharmacy: "Farmasi", inventory: "Inventory",
-    procurement: "Pengadaan", stockTake: "Stok Opname", stockTransfer: "Transfer Stok", tariffs: "Tarif", payers: "Penjamin", safety: "Keselamatan",
+    procurement: "Pengadaan", stockTake: "Stok Opname", stockTransfer: "Transfer Stok", recall: "Penarikan Obat", tariffs: "Tarif", payers: "Penjamin", safety: "Keselamatan",
     riskRegister: "Manajemen Risiko", consent: "Persetujuan", complaints: "Komplain", feedback: "Umpan Balik", infectionControl: "PPI / Infeksi",
     antimicrobial: "Stewardship Antimikroba", qualityIndicators: "Indikator Mutu", credentials: "Kredensial Nakes", staffDirectory: "Direktori Staf", privileging: "Kewenangan Klinis", roster: "Jadwal Jaga",
     audit: "Audit Trail", observability: "Observability",
@@ -63,7 +63,7 @@ const en: Messages = {
     surgery: "Surgery", diagnostics: "Lab & Radiology", imaging: "Imaging / PACS",
     specialCare: "Special Care", forms: "Dynamic Forms", devices: "Devices", biomedical: "Biomedical Assets", helpdesk: "IT Helpdesk", contracts: "Vendors & Contracts",
     formulary: "Formulary", pharmacy: "Pharmacy", inventory: "Inventory",
-    procurement: "Procurement", stockTake: "Stock-Take", stockTransfer: "Stock Transfer", tariffs: "Tariffs", payers: "Payers", safety: "Patient Safety",
+    procurement: "Procurement", stockTake: "Stock-Take", stockTransfer: "Stock Transfer", recall: "Drug Recall", tariffs: "Tariffs", payers: "Payers", safety: "Patient Safety",
     riskRegister: "Risk Management", consent: "Consent", complaints: "Complaints", feedback: "Feedback", infectionControl: "IPC / Infection",
     antimicrobial: "Antimicrobial Stewardship", qualityIndicators: "Quality Indicators", credentials: "Staff Credentials", staffDirectory: "Staff Directory", privileging: "Clinical Privileging", roster: "Shift Roster",
     audit: "Audit Trail", observability: "Observability",
