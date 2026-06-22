@@ -42,6 +42,7 @@ import { createItem, recordBatch } from "./pharmacy/inventory";
 import { transferStock } from "./pharmacy/stock-transfer";
 import { issueRecall } from "./pharmacy/recall";
 import { recordAssessment } from "./clinical/nursing-assessments";
+import { recordFluidEntry } from "./clinical/fluid-balance";
 import { recordStockTake } from "./pharmacy/stock-take";
 import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
@@ -480,6 +481,12 @@ export async function ensureDemoSeed(): Promise<void> {
       items: { historyOfFalling: true, secondaryDiagnosis: true, ambulatoryAid: "crutches", ivTherapy: true, gait: "weak", mentalStatus: "oriented" } }); // skor 85 → tinggi
     await recordAssessment(DEMO_COMPANY_ID, { patientId: "PAT-204", patientName: "Siti Rahmawati", scale: "braden",
       items: { sensoryPerception: 3, moisture: 2, activity: 2, mobility: 3, nutrition: 2, frictionShear: 2 } }); // skor 14 → sedang
+
+    // Balans cairan — lembar intake/output Andi Wijaya (net +600 mL → balans positif).
+    await recordFluidEntry(DEMO_COMPANY_ID, { patientId: "PAT-123", patientName: "Andi Wijaya", direction: "intake", type: "iv", volumeMl: 1000 });
+    await recordFluidEntry(DEMO_COMPANY_ID, { patientId: "PAT-123", patientName: "Andi Wijaya", direction: "intake", type: "oral", volumeMl: 500 });
+    await recordFluidEntry(DEMO_COMPANY_ID, { patientId: "PAT-123", patientName: "Andi Wijaya", direction: "output", type: "urine", volumeMl: 800 });
+    await recordFluidEntry(DEMO_COMPANY_ID, { patientId: "PAT-123", patientName: "Andi Wijaya", direction: "output", type: "drain", volumeMl: 100 });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

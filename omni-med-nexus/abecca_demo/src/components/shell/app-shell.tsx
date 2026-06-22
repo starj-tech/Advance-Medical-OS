@@ -25,6 +25,7 @@ const titleKeys: Record<string, keyof Messages["nav"]> = {
   "/imaging": "imaging",
   "/special-care": "specialCare",
   "/assessments": "assessments",
+  "/fluid-balance": "fluidBalance",
   "/forms": "forms",
   "/devices": "devices",
   "/biomedical": "biomedical",
