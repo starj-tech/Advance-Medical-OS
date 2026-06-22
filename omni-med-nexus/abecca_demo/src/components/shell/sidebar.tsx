@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
+  ArrowRightLeft,
   BadgeCheck,
   BarChart3,
   BedDouble,
@@ -73,6 +74,7 @@ const nav: { href: string; key: keyof Messages["nav"]; icon: typeof LayoutDashbo
   { href: "/inventory", key: "inventory", icon: Boxes },
   { href: "/procurement", key: "procurement", icon: ShoppingCart },
   { href: "/stock-take", key: "stockTake", icon: ClipboardCheck },
+  { href: "/stock-transfer", key: "stockTransfer", icon: ArrowRightLeft },
   { href: "/tariffs", key: "tariffs", icon: Receipt },
   { href: "/payers", key: "payers", icon: Landmark },
   { href: "/safety", key: "safety", icon: ShieldAlert },

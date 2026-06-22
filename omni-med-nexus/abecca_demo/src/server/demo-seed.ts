@@ -39,6 +39,7 @@ import { createContract } from "./procurement/contracts";
 import { createPayer } from "./billing/payers";
 import { recordConsent, withdrawConsent } from "./clinical/consent";
 import { createItem, recordBatch } from "./pharmacy/inventory";
+import { transferStock } from "./pharmacy/stock-transfer";
 import { recordStockTake } from "./pharmacy/stock-take";
 import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
@@ -333,7 +334,7 @@ export async function ensureDemoSeed(): Promise<void> {
 
     // Inventory farmasi — campuran item/batch utk memicu setiap jenis alert (reorder + ED).
     const pcm = await createItem(DEMO_COMPANY_ID, { name: "Paracetamol 500 mg", unit: "tablet", reorderPoint: 100 });
-    await recordBatch(DEMO_COMPANY_ID, pcm.id, { batchNo: "BPC-2405", quantity: 500, expiryDate: cdays(400) }); // aman
+    const pcmBatch = await recordBatch(DEMO_COMPANY_ID, pcm.id, { batchNo: "BPC-2405", quantity: 500, expiryDate: cdays(400) }); // aman
     await recordBatch(DEMO_COMPANY_ID, pcm.id, { batchNo: "BPC-2312", quantity: 80, expiryDate: cdays(60) });   // segera kedaluwarsa
     const amx = await createItem(DEMO_COMPANY_ID, { name: "Amoksisilin 500 mg", unit: "kapsul", reorderPoint: 50 });
     const amxBatch = await recordBatch(DEMO_COMPANY_ID, amx.id, { batchNo: "AMX-2403", quantity: 30, expiryDate: cdays(150) });  // stok rendah (≤reorder)
@@ -465,6 +466,9 @@ export async function ensureDemoSeed(): Promise<void> {
     await createContract(DEMO_COMPANY_ID, { vendor: "PT Telkom", title: "Internet dedicated 200 Mbps", type: "service", value: 72_000_000, startDate: cdate(-380), endDate: cdate(-15) }); // kedaluwarsa
     await createContract(DEMO_COMPANY_ID, { vendor: "PT SIMRS Nusantara", title: "Lisensi & dukungan SIMRS tahunan", type: "license", value: 350_000_000, startDate: cdate(-100), endDate: cdate(265) }); // berlaku
     await createContract(DEMO_COMPANY_ID, { vendor: "CV Bersih Sehat", title: "Jasa kebersihan (outsourcing)", type: "service", value: 480_000_000, startDate: cdate(-500), endDate: cdate(-60), status: "terminated", notes: "Tidak diperpanjang — pindah vendor." });
+
+    // Transfer stok antar-depo — distribusi Paracetamol dari Gudang Pusat ke Depo IGD (stok kekal).
+    if (pcmBatch) await transferStock(DEMO_COMPANY_ID, { fromBatchId: pcmBatch.id, toLocation: "Depo IGD", quantity: 150 });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }

@@ -22,17 +22,19 @@ export interface InventoryBatch {
   batchNo: string;
   quantity: number;
   expiryDate: string;
+  /** Storage location / depot (null = main store). Drives inter-depot transfers. */
+  location: string | null;
   createdAt: string;
 }
 
 type ItemRow = { id: string; company_id: string; name: string; unit: string; reorder_point: number; created_at: string };
-type BatchRow = { id: string; company_id: string; item_id: string; batch_no: string; quantity: number; expiry_date: string; created_at: string };
+type BatchRow = { id: string; company_id: string; item_id: string; batch_no: string; quantity: number; expiry_date: string; location: string | null; created_at: string };
 const toItem = (r: ItemRow): InventoryItem => ({
   id: r.id, companyId: r.company_id, name: r.name, unit: r.unit, reorderPoint: Number(r.reorder_point), createdAt: r.created_at,
 });
 const toBatch = (r: BatchRow): InventoryBatch => ({
   id: r.id, companyId: r.company_id, itemId: r.item_id, batchNo: r.batch_no,
-  quantity: Number(r.quantity), expiryDate: r.expiry_date, createdAt: r.created_at,
+  quantity: Number(r.quantity), expiryDate: r.expiry_date, location: r.location ?? null, createdAt: r.created_at,
 });
 
 const g = globalThis as unknown as { __abeccaInvItems?: InventoryItem[]; __abeccaInvBatches?: InventoryBatch[] };
@@ -73,16 +75,17 @@ export async function listItems(companyId: string): Promise<InventoryItem[]> {
 export async function recordBatch(
   companyId: string,
   itemId: string,
-  input: { batchNo: string; quantity: number; expiryDate: string; createdBy?: string | null },
+  input: { batchNo: string; quantity: number; expiryDate: string; location?: string | null; createdBy?: string | null },
 ): Promise<InventoryBatch | undefined> {
   const quantity = Math.max(0, Math.floor(input.quantity));
+  const location = input.location?.trim() || null;
   const sb = getSupabase();
   if (sb) {
     const { data: item } = await sb.from("inventory_items").select("id").eq("company_id", companyId).eq("id", itemId).maybeSingle();
     if (!item) return undefined;
     const { data, error } = await sb
       .from("inventory_batches")
-      .insert({ company_id: companyId, item_id: itemId, batch_no: input.batchNo, quantity, expiry_date: input.expiryDate, created_by: input.createdBy ?? null })
+      .insert({ company_id: companyId, item_id: itemId, batch_no: input.batchNo, quantity, expiry_date: input.expiryDate, location, created_by: input.createdBy ?? null })
       .select("*").single();
     if (error || !data) throw new Error(error?.message ?? "record batch failed");
     return toBatch(data as BatchRow);
@@ -90,7 +93,7 @@ export async function recordBatch(
   if (!items.some((i) => i.companyId === companyId && i.id === itemId)) return undefined;
   const batch: InventoryBatch = {
     id: crypto.randomUUID(), companyId, itemId, batchNo: input.batchNo, quantity,
-    expiryDate: input.expiryDate, createdAt: new Date().toISOString(),
+    expiryDate: input.expiryDate, location, createdAt: new Date().toISOString(),
   };
   batches.push(batch);
   return batch;
