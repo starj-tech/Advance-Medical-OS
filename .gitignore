@@ -1,47 +1,31 @@
 # Node
 node_modules/
 .next/
+out/
 dist/
 build/
 *.log
+next-env.d.ts
+*.tsbuildinfo
 
 # Rust
 target/
 Cargo.lock
 
-# Flutter/Dart
-.dart_tool/
-.packages
-.pub-cache/
-.pub/
-build/
-*.iml
-*.xcworkspace/
-*.xcodeproj/
-.idea/
-
-# Mac
-.DS_Store
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
 
 # Python
 __pycache__/
 *.pyc
 
-# Others
+# Editors / OS
+.idea/
+.DS_Store
+
+# Coverage
 coverage/
-
-omni_med_nexus_os/
-patch_*.sh
-
-# Super admin node modules
-omni-med-nexus/super_admin_web/node_modules/
-omni-med-nexus/super_admin_web/.next/
-omni-med-nexus/super_admin_web/out/
-omni-med-nexus/super_admin_web/build/
-
-# Ignore flutter internals to keep diff small
-omni-med-nexus/ui_app/linux/
-omni-med-nexus/ui_app/macos/
-omni-med-nexus/ui_app/windows/
-omni-med-nexus/ui_app/rust_builder/
-omni-med-nexus/tauri_app/src-tauri/target/

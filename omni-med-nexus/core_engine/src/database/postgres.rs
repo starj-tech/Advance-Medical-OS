@@ -1,4 +1,4 @@
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
 
 pub async fn init_pool(database_url: &str) -> Result<Pool<Postgres>, sqlx::Error> {
     PgPoolOptions::new()

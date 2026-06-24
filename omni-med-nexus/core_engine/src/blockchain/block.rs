@@ -39,7 +39,12 @@ impl Block {
         let mut hasher = Sha256::new();
         let data = format!(
             "{}{}{}{}{}{}",
-            self.index, self.timestamp, self.patient_id, self.action, self.doctor_id, self.previous_hash
+            self.index,
+            self.timestamp,
+            self.patient_id,
+            self.action,
+            self.doctor_id,
+            self.previous_hash
         );
         hasher.update(data);
         let result = hasher.finalize();

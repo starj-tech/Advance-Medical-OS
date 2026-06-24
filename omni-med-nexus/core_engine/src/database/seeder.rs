@@ -1,5 +1,5 @@
-use sqlx::{Pool, Postgres};
 use log::info;
+use sqlx::{Pool, Postgres};
 
 pub async fn seed_master_data(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> {
     info!("Seeding master data tables...");
@@ -9,7 +9,7 @@ pub async fn seed_master_data(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> 
         "CREATE TABLE IF NOT EXISTS icd10_codes (
             code VARCHAR(10) PRIMARY KEY,
             description TEXT NOT NULL
-        )"
+        )",
     )
     .execute(pool)
     .await?;
@@ -20,7 +20,7 @@ pub async fn seed_master_data(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> 
             medication_name VARCHAR(255) NOT NULL,
             dosage VARCHAR(100) NOT NULL,
             stock_quantity INTEGER NOT NULL
-        )"
+        )",
     )
     .execute(pool)
     .await?;
@@ -31,7 +31,7 @@ pub async fn seed_master_data(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> 
             name VARCHAR(255) NOT NULL,
             encrypted_ssn TEXT NOT NULL,
             encrypted_medical_history TEXT NOT NULL
-        )"
+        )",
     )
     .execute(pool)
     .await?;
@@ -43,7 +43,7 @@ pub async fn seed_master_data(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> 
             procedure_code VARCHAR(50) NOT NULL UNIQUE,
             procedure_name VARCHAR(255) NOT NULL,
             base_price NUMERIC(10, 2) NOT NULL
-        )"
+        )",
     )
     .execute(pool)
     .await?;
@@ -54,7 +54,7 @@ pub async fn seed_master_data(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> 
         ('J00', 'Acute nasopharyngitis [common cold]'),
         ('I10', 'Essential (primary) hypertension'),
         ('E11', 'Type 2 diabetes mellitus')
-        ON CONFLICT (code) DO NOTHING"
+        ON CONFLICT (code) DO NOTHING",
     )
     .execute(pool)
     .await?;
@@ -65,7 +65,7 @@ pub async fn seed_master_data(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> 
         ('Paracetamol', '500mg', 10000),
         ('Amoxicillin', '250mg', 5000),
         ('Metformin', '500mg', 8000)
-        ON CONFLICT DO NOTHING"
+        ON CONFLICT DO NOTHING",
     )
     .execute(pool)
     .await?;
@@ -77,7 +77,7 @@ pub async fn seed_master_data(pool: &Pool<Postgres>) -> Result<(), sqlx::Error> 
         ('CON-02', 'Specialist Consultation', 350000.00),
         ('ER-01', 'Emergency Room Basic Admission', 500000.00),
         ('LAB-01', 'Complete Blood Count (CBC)', 85000.00)
-        ON CONFLICT (procedure_code) DO NOTHING"
+        ON CONFLICT (procedure_code) DO NOTHING",
     )
     .execute(pool)
     .await?;

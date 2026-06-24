@@ -37,7 +37,7 @@ resource "google_sql_database_instance" "omni_med_postgres" {
     }
 
     maintenance_window {
-      day          = 7 # Sunday
+      day          = 7  # Sunday
       hour         = 18 # 01:00 WIB
       update_track = "stable"
     }

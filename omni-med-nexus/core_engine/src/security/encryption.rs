@@ -1,10 +1,16 @@
 use aes_gcm::{
-    aead::{Aead, AeadCore, KeyInit, OsRng},
     Aes256Gcm, Key, Nonce,
+    aead::{Aead, AeadCore, KeyInit, OsRng},
 };
 
 pub struct SecurityManager {
     key: Key<Aes256Gcm>,
+}
+
+impl Default for SecurityManager {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SecurityManager {
@@ -47,13 +53,11 @@ impl SecurityManager {
         let cipher = Aes256Gcm::new(&self.key);
 
         match cipher.decrypt(nonce, ciphertext) {
-            Ok(plaintext_bytes) => {
-                match String::from_utf8(plaintext_bytes) {
-                    Ok(text) => Ok(text),
-                    Err(_) => Err("Invalid UTF-8 in decrypted data".to_string())
-                }
+            Ok(plaintext_bytes) => match String::from_utf8(plaintext_bytes) {
+                Ok(text) => Ok(text),
+                Err(_) => Err("Invalid UTF-8 in decrypted data".to_string()),
             },
-            Err(_) => Err("Decryption failed. Invalid key or corrupted data.".to_string())
+            Err(_) => Err("Decryption failed. Invalid key or corrupted data.".to_string()),
         }
     }
 }

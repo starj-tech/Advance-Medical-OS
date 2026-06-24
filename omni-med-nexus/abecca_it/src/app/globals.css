@@ -1,27 +1,117 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Drive `dark:` utilities from a `.dark` class on <html> (toggled by the theme
+   provider) rather than the OS media query, so the manual toggle wins. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   Abecca — Clinical Light design system
+   Calm sky-blue surfaces and a confident clinical-blue primary, drawn from the
+   Abecca mark (soft sky blue + white). Tuned for clinicians, executives and
+   hospital leadership: airy, trustworthy, high-legibility. Ships light + dark;
+   the dark palette also backs the legacy boot screen.
+   ========================================================================== */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #eef4fa; /* soft sky-tinted canvas */
+  --surface: #ffffff;
+  --foreground: #0f2233; /* deep blue-slate ink */
+  --muted: #e4eef7;
+  --muted-foreground: #56708a;
+  --border: #d4e3f1;
+
+  --primary: #2576b6; /* clinical sky-blue — AA on white, on-brand */
+  --primary-foreground: #ffffff;
+
+  --ring: #2576b6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.dark {
+  --background: #0a1722;
+  --surface: #0f2130;
+  --foreground: #e5eef6;
+  --muted: #17293a;
+  --muted-foreground: #91a7bc;
+  --border: #21384c;
+
+  --primary: #6cb6e6; /* airy sky-blue — pops on dark surfaces */
+  --primary-foreground: #06243a;
+
+  --ring: #6cb6e6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Animations (preserved from the original boot screen + portal use) */
+@theme {
+  --animate-fade-in-up: fade-in-up 0.5s ease-out forwards;
+  --animate-fade-in: fade-in 0.5s ease-out forwards;
+  --animate-pulse-ring: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes fade-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse-ring {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
   }
 }
 
 body {
-  color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* Quiet, on-brand scrollbars for the data-dense screens */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
 }

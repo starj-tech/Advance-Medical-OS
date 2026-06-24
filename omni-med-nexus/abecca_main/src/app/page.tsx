@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+import Link from "next/link";
 
 export default function AbeccaMainHome() {
   const [bootSequence, setBootSequence] = useState(0);
@@ -15,6 +16,13 @@ export default function AbeccaMainHome() {
   return (
     <main className="min-h-screen bg-black text-emerald-500 font-mono flex flex-col items-center justify-center overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-900/20 via-black to-black z-0"></div>
+
+      <Link
+        href="/dashboard"
+        className="absolute top-5 right-5 z-20 text-xs uppercase tracking-[0.2em] text-emerald-600/70 transition-colors hover:text-emerald-400"
+      >
+        Skip →
+      </Link>
 
       <div className="z-10 w-full max-w-4xl p-8 flex flex-col items-center">
         <div className="mb-12 flex flex-col items-center">
@@ -54,12 +62,15 @@ export default function AbeccaMainHome() {
 
           {bootSequence >= 4 && (
             <div className="mt-12 flex justify-center w-full animate-fade-in">
-              <button className="group relative px-8 py-3 bg-transparent overflow-hidden rounded border border-emerald-500/50 hover:border-emerald-400 transition-colors">
+              <Link
+                href="/dashboard"
+                className="group relative px-8 py-3 bg-transparent overflow-hidden rounded border border-emerald-500/50 hover:border-emerald-400 transition-colors"
+              >
                 <div className="absolute inset-0 bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-colors" />
                 <span className="relative flex items-center space-x-2 text-emerald-400 tracking-wider text-sm font-semibold">
                   <span>ENTER CLOUD SYSTEM</span>
                 </span>
-              </button>
+              </Link>
             </div>
           )}
         </div>
