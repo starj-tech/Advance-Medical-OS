@@ -44,6 +44,7 @@ import { issueRecall } from "./pharmacy/recall";
 import { recordAssessment } from "./clinical/nursing-assessments";
 import { recordFluidEntry } from "./clinical/fluid-balance";
 import { recordHandover, acknowledgeHandover } from "./clinical/handovers";
+import { recordGcs } from "./clinical/gcs";
 import { recordStockTake } from "./pharmacy/stock-take";
 import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
@@ -505,6 +506,11 @@ export async function ensureDemoSeed(): Promise<void> {
       recommendation: "Alih baring tiap 2 jam, kasur dekubitus, nutrisi adekuat.",
     });
     if (ackHandover.ok) await acknowledgeHandover(DEMO_COMPANY_ID, ackHandover.handover.id, { acknowledgedBy: null });
+
+    // GCS — campuran tingkat kesadaran (mild/moderate/severe).
+    await recordGcs(DEMO_COMPANY_ID, { patientId: "PAT-123", patientName: "Andi Wijaya", components: { eye: 4, verbal: 5, motor: 6 } }); // 15 ringan
+    await recordGcs(DEMO_COMPANY_ID, { patientId: "PAT-310", patientName: "Budi Santoso", components: { eye: 3, verbal: 4, motor: 5 }, note: "Post-iktal" }); // 12 sedang
+    await recordGcs(DEMO_COMPANY_ID, { patientId: "PAT-402", patientName: "Eko Prasetyo", components: { eye: 2, verbal: 2, motor: 4 }, note: "Cedera kepala IGD" }); // 8 berat
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
