@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Activity,
   ArrowRightLeft,
+  Baby,
   BadgeCheck,
   BarChart3,
   BedDouble,
@@ -74,6 +75,7 @@ const nav: { href: string; key: keyof Messages["nav"]; icon: typeof LayoutDashbo
   { href: "/fluid-balance", key: "fluidBalance", icon: Droplets },
   { href: "/handover", key: "handover", icon: ClipboardSignature },
   { href: "/gcs", key: "gcs", icon: Brain },
+  { href: "/dosing", key: "dosing", icon: Baby },
   { href: "/forms", key: "forms", icon: FileText },
   { href: "/devices", key: "devices", icon: Radio },
   { href: "/biomedical", key: "biomedical", icon: Wrench },

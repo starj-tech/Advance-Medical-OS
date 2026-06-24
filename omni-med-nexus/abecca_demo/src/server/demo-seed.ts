@@ -45,6 +45,7 @@ import { recordAssessment } from "./clinical/nursing-assessments";
 import { recordFluidEntry } from "./clinical/fluid-balance";
 import { recordHandover, acknowledgeHandover } from "./clinical/handovers";
 import { recordGcs } from "./clinical/gcs";
+import { recordDoseCalc } from "./clinical/pediatric-dosing";
 import { recordStockTake } from "./pharmacy/stock-take";
 import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
@@ -511,6 +512,10 @@ export async function ensureDemoSeed(): Promise<void> {
     await recordGcs(DEMO_COMPANY_ID, { patientId: "PAT-123", patientName: "Andi Wijaya", components: { eye: 4, verbal: 5, motor: 6 } }); // 15 ringan
     await recordGcs(DEMO_COMPANY_ID, { patientId: "PAT-310", patientName: "Budi Santoso", components: { eye: 3, verbal: 4, motor: 5 }, note: "Post-iktal" }); // 12 sedang
     await recordGcs(DEMO_COMPANY_ID, { patientId: "PAT-402", patientName: "Eko Prasetyo", components: { eye: 2, verbal: 2, motor: 4 }, note: "Cedera kepala IGD" }); // 8 berat
+
+    // Dosis pediatrik — contoh normal & satu yg terplafon (>dosis maks dewasa).
+    await recordDoseCalc(DEMO_COMPANY_ID, { patientId: "PAT-402", patientName: "Eko Prasetyo", drugCode: "paracetamol", weightKg: 12 }); // 180 mg/dosis
+    await recordDoseCalc(DEMO_COMPANY_ID, { patientId: "PAT-310", patientName: "Budi Santoso", drugCode: "amoxicillin", weightKg: 25 }); // 625→plafon 500 mg/dosis
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
