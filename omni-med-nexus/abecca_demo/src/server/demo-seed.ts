@@ -43,6 +43,7 @@ import { transferStock } from "./pharmacy/stock-transfer";
 import { issueRecall } from "./pharmacy/recall";
 import { recordAssessment } from "./clinical/nursing-assessments";
 import { recordFluidEntry } from "./clinical/fluid-balance";
+import { recordHandover, acknowledgeHandover } from "./clinical/handovers";
 import { recordStockTake } from "./pharmacy/stock-take";
 import { createPurchaseOrder, setPoStatus, receiveGoods } from "./pharmacy/procurement";
 import {
@@ -487,6 +488,23 @@ export async function ensureDemoSeed(): Promise<void> {
     await recordFluidEntry(DEMO_COMPANY_ID, { patientId: "PAT-123", patientName: "Andi Wijaya", direction: "intake", type: "oral", volumeMl: 500 });
     await recordFluidEntry(DEMO_COMPANY_ID, { patientId: "PAT-123", patientName: "Andi Wijaya", direction: "output", type: "urine", volumeMl: 800 });
     await recordFluidEntry(DEMO_COMPANY_ID, { patientId: "PAT-123", patientName: "Andi Wijaya", direction: "output", type: "drain", volumeMl: 100 });
+
+    // Serah terima SBAR — 1 handover menunggu konfirmasi + 1 sudah diterima.
+    await recordHandover(DEMO_COMPANY_ID, {
+      patientId: "PAT-123", patientName: "Andi Wijaya", fromStaff: "Ns. Dewi Lestari", toStaff: "Ns. Rudi Hartono", shift: "night",
+      situation: "Pasca-bedah H+1, nyeri terkontrol, balans cairan positif.",
+      background: "Apendektomi 24 jam lalu; riwayat hipertensi.",
+      assessment: "TTV stabil, luka kering, mobilisasi bertahap.",
+      recommendation: "Lanjut analgesik terjadwal, pantau drain & balans cairan.",
+    });
+    const ackHandover = await recordHandover(DEMO_COMPANY_ID, {
+      patientId: "PAT-204", patientName: "Siti Rahmawati", fromStaff: "Ns. Maya", toStaff: "Ns. Dewi Lestari", shift: "morning",
+      situation: "Observasi risiko dekubitus (Braden sedang).",
+      background: "Tirah baring lama, mobilitas terbatas.",
+      assessment: "Kulit sakrum kemerahan ringan, belum lecet.",
+      recommendation: "Alih baring tiap 2 jam, kasur dekubitus, nutrisi adekuat.",
+    });
+    if (ackHandover.ok) await acknowledgeHandover(DEMO_COMPANY_ID, ackHandover.handover.id, { acknowledgedBy: null });
   } catch (err) {
     console.error("[demo-seed] best-effort seed failed", err);
   }
